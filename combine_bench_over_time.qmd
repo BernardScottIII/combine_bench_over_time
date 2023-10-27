@@ -1,0 +1,188 @@
+---
+title: "Combine Bench Over Time"
+author: "BMS"
+institute: University of Scranton
+format: html
+editor: visual
+---
+
+# Project Component 3
+
+```{r}
+library(tidyverse)
+library(ggthemes)
+library(modeldata)
+library(dplyr)
+
+theme_set(theme_minimal(base_size = 12))
+
+combine <- read_csv("data/clean_combine.csv")
+
+glimpse(combine)
+
+condensed_combine <- combine %>%
+  mutate(position = fct_collapse(position,
+    "S" = c("FS", "SS"),
+    "LB" = c("OLB", "ILB"),
+    "DT" = c("DT", "NT")
+  ))
+
+glimpse(condensed_combine)
+```
+
+## Question 1: What is the distribution of the number of bench press reps for every year included in the data set?
+
+I can answer this question by categorizing the rows according to the year, then plotting a histogram of the `bench` variable which contains values from rows with a specified year. In other words, I can make seventeen plots which counts the possible number of bench press reps and how often they occur.
+
+```{r}
+plot_bench <- function(yr) {
+  plot(condensed_combine %>%
+    filter(bench > 0 & year == yr) %>%
+    ggplot(aes(x = bench)) +
+    geom_bar())
+}
+
+for(yr in 1999:2015) {
+  plot_bench(yr)
+}
+
+```
+All of these graphs suggest that the average is some value less than or equal to 20 reps. To verify this claim, I will plot the average number of bench press reps of all players for every year in one graph.
+
+```{r}
+condensed_combine %>%
+  group_by(year) %>%
+  summarise(mean_bench = mean(bench, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = mean_bench)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1999:2015) +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(axis.text.x = element_text(angle=45)) + 
+  labs(x = "Year", y = "Average Bench Press Reps", title = "Average Bench Press Reps by Year")
+```
+
+This graph supports my conclusion that the number of bench press reps was some value under 20. Furthermore, this graph shows that the average number of bench press reps is trending upward from 1999 to 2015.
+
+## Question 2: Does the weight of a player in the combine have an impact on their number of bench press repitions?
+
+To answer this question, I will take a similar approach to answering the last one, by starting with plotting graphs relating every player's weight to their number of bench press repetitions. One graph for each year between 1999 and 2015.
+
+```{r}
+bench_weight <- function(yr) {
+  plot(condensed_combine %>%
+    filter(bench > 0 & year == yr) %>%
+    ggplot(aes(x = bench, y = weight)) +
+    geom_point() +
+    geom_smooth(method=lm, se=FALSE))
+}
+
+for(year in 1999:2015) {
+  bench_weight(year)
+}
+```
+
+Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant's body weight and their number of bench press repetitions. To summarize this data, I will create a plot graphing the average weight of all players within my data set and separate them by the position they play.
+
+```{r}
+condensed_combine %>%
+  filter(position != "OC") %>%
+  group_by(position) %>%
+  summarise(mean_weight = mean(weight, na.rm = TRUE)) %>%
+  ggplot(aes(x = position, y = mean_weight)) +
+  geom_bar(stat = "identity")
+```
+
+This graph shows that the lineman positions, C, DE, DT, LS, OG, OT, and even TE, tend to weigh more than their backfield counterparts.
+
+## Question 3: Is the number of bench press repetitions different depending on a player's position?
+
+Many football spectators know that football is a game where individuals play specific positions, and hence have training and nutrition regimens designed to make those players better at their positions. A consequence of this is that lineman are significantly heavier than their backfield counterparts. This observation serves as the main inspiration for this question.
+
+To answer this question, I will plot the average number of bench press repetitions for players, grouped by the position of the player.
+
+```{r}
+condensed_combine %>%
+  filter(position != "OC") %>%
+  group_by(position) %>%
+  summarise(mean_bench = mean(bench, na.rm = TRUE)) %>%
+  ggplot(aes(x = position, y = mean_bench)) +
+  geom_bar(stat = "identity")
+```
+
+This graph suggests that players playing different positions on a football team have different bench press repetition averages.
+
+## Question 4: Does the length of a player's arms impact the number of bench press reps they can do?
+
+The body part directly involved with performing the exercise is the arm, which travels up and down in a path parallel to the ground. However, this distance traveled is different for every player because every player's arm length is different. I will create a plot to investigate the potential relationship between a player's wingspan and their number of bench press reps.
+
+```{r}
+bench_arms <- function(yr) {
+  plot(condensed_combine %>%
+    filter(bench > 0 & year == yr & position != "K" & arms != 0) %>%
+    ggplot(aes(x = bench, y = arms)) +
+    geom_point() +
+    geom_smooth(method=lm, se=FALSE))
+}
+
+for(year in 1999:2015) {
+  bench_arms(year)
+}
+```
+
+In the case of my data set, it is evident that the arm length data is incomplete, and will likely remain so for the foreseeable future. However, in the years with plentiful data, it is clear that there is a positive relationship between the number of bench press repetitions and a player's arm length.
+
+```{r}
+condensed_combine %>%
+  filter(position != "OC") %>%
+  group_by(bench) %>%
+  summarise(mean_arms = mean(arms, na.rm = TRUE)) %>%
+  ggplot(aes(x = bench, y = mean_arms)) +
+  geom_bar(stat = "identity")
+
+condensed_combine %>%
+  filter(position != "OC" & year == c(2010, 2011, 2012, 2013)) %>%
+  group_by(bench) %>%
+  summarise(mean_arms = mean(arms, na.rm = TRUE)) %>%
+  ggplot(aes(x = bench, y = mean_arms)) +
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+However, on average, this plot suggests that there is a negative relationship between arm length and number of bench press repetitions, which contradicts my initial investigation of this question.
+
+## Conclusion
+
+From the questions asked above, I now have a better understanding of the combine data set.I know that players participating in the NFL Combine from 1999 to 2015 bench press 225 pounds for 15 repetitions on average in 1999, and that average has grown to just under 17 repetitions by 2015. Furthermore, I can expect that players which play certain positions on a NFL football team, such as those playing lineman positions, have an increased likelihood of being able to perform more bench press repetitions than their backfield counterpart. This presumption is supported by my investigation which suggested that weight and arm length have an impact on the number of repetitions a player can perform.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
