@@ -154,12 +154,176 @@ However, on average, this plot suggests that there is a negative relationship be
 
 From the questions asked above, I now have a better understanding of the combine data set.I know that players participating in the NFL Combine from 1999 to 2015 bench press 225 pounds for 15 repetitions on average in 1999, and that average has grown to just under 17 repetitions by 2015. Furthermore, I can expect that players which play certain positions on a NFL football team, such as those playing lineman positions, have an increased likelihood of being able to perform more bench press repetitions than their backfield counterpart. This presumption is supported by my investigation which suggested that weight and arm length have an impact on the number of repetitions a player can perform.
 
+# Project Component 4
+
+## Models
+
+### Linear Regression
+For the variables I have explored, I will use a linear regression to assess whether there is a relationship between the number of bench press repetitions a player can perform and several biometrics, including weight, height, and arm length.
+
+### KNN
+Another model I will use is the K-NN model, in order to investigate the potential relationship between a player's position and their combine statistics, including bench, height, weight, and arm length.
+
+## Model Results
+
+### Predictors of Number of Repetitions
+
+The following figure shows the linear regression results, and the error bars represent the standard deviation for each term. Rows in the data set which have values of zero were not included in this linear regression, meaning that there is evidence to suggest a relationship between a combine player's height, wingspan, and weight and the number of repetitions of 225-lb bench they can perform.
+
+```{r}
+library(parsnip)
+library(recipes)
+library(tidymodels)
+
+# set seed for reproducability
+set.seed(4133)
+
+# load the combine dataset (should already be loaded from previous chunks)
+combine_nums <- condensed_combine %>%
+  select(bench, arms, heightinchestotal, weight) %>%
+  filter(bench != 0, arms != 0, heightinchestotal != 0, weight != 0)
+
+data(combine_nums)
+
+# create a training and testing split
+combine_split <- initial_split(combine_nums, prop = 0.8)
+
+# create a training and testing dataset
+combine_training <- training(combine_split)
+combine_testing <- testing(combine_split)
+
+# create a recipe for preprocessing
+combine_recipe <- recipe(bench ~ ., data = combine_training) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+# create a linear regression model
+lm_spec <- linear_reg() %>%
+  set_engine("lm")
+
+# fit the model
+lm_fit <- workflow() %>%
+  add_recipe(combine_recipe) %>%
+  add_model(lm_spec) %>%
+  fit(data = combine_training)
+
+# make predictions
+lm_pred <- predict(lm_fit, combine_testing) %>%
+  bind_cols(combine_testing)
+
+# evaluate the model
+lm_eval <- lm_pred %>%
+  metrics(truth = bench, estimate = .pred) %>%
+  bind_rows(
+    lm_pred %>%
+      rsq(truth = bench, estimate = .pred) %>%
+      mutate(metric = "rsq")
+  )
+
+# tidy the model results
+lm_tidy <- tidy(lm_fit)
+
+# visualize the model results
+lm_tidy %>%
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error)) +
+  coord_flip() +
+  labs(
+    title = "Linear Regression Model Results",
+    subtitle = "Model: bench ~ .",
+    x = "Term",
+    y = "Estimate"
+  )
+```
+
+### Predictors of Player Position
+
+This figure displays a KNN model which characterizes what position a combine participant is most likely to be playing given a number of biometrics, including weight, wingspan, hand size, and multiple athletic statistics including ten, twenty, and forty yard dash times, three cone and twenty yard shuttle times, jump height, jump distance, and number of bench press repetitions. With the given data set, removing all rows with any values of zero would reduce the number of rows to an abysmally low number where no meaningful conclusions could be made. Since values of zero are included in this model, it is impossible to confirm or deny and evidence for/against a relationship between where a player plays on the field and the previously mentioned biometrics. This model will categorize players based on the previously mentioned biometrics by where they would play on the field, which includes the offensive line, defensive line, offensive backfield, defensive backfield, and special teams.
+
+```{r}
+library(knitr)
+
+generalized_combine <- condensed_combine %>%
+  mutate(position = fct_collapse(position,
+    "O-Line" = c("OG", "OT", "C"),
+    "O-2ry" = c("FB", "QB", "RB", "TE", "WR"),
+    "D-Line" = c("DT", "DE"),
+    "D-2ry" = c("CB", "S", "LB"),
+    "Special" = c("K", "P", "LS"),
+  ))
+
+#glimpse(generalized_combine)
+
+# set seed for reproducability
+set.seed(4133)
+
+# load the combine dataset (should already be loaded from previous chunks)
+combine_pos <- generalized_combine %>%
+  select(heightinchestotal, weight, arms, hands, fortyyd, twentyyd, tenyd, twentyss, threecone, vertical, broad, bench, position) #%>%
+  #filter(weight != 0, arms != 0, hands != 0, fortyyd != 0, twentyyd != 0, tenyd != 0, twentyss != 0, threecone != 0, vertical != 0, broad != 0, bench != 0)
+
+glimpse(combine_pos)
+
+# create a training and testing split
+combine_pos_split <- initial_split(combine_pos, prop = 0.8)
+
+# create a training and testing dataset
+combine_pos_training <- training(combine_pos_split)
+combine_pos_testing <- testing(combine_pos_split)
+
+# every predictor adds a dimension, and I have too many of them.
+
+position_rec <- recipe(position ~ heightinchestotal + weight + arms + hands + fortyyd + twentyyd + tenyd + twentyss + threecone + vertical + broad + bench,
+                       data = combine_pos_training) %>%
+  step_normalize(all_numeric_predictors())
+
+position_spec <- nearest_neighbor(neighbors = 5) %>%
+  set_engine("kknn") %>%
+  set_mode("classification")
+
+#neighbors = tune()
+
+#follow lesson 8 example 3
+
+position_wf <- workflow() %>%
+  add_recipe(position_rec) %>%
+  add_model(position_spec)
+
+position_fit <- fit(position_wf,combine_pos_training)
+
+position_fit %>%
+  predict(combine_pos_testing) %>%
+  cbind(combine_pos_testing) %>%
+  conf_mat(position,.pred_class)
+
+position_fit %>%
+  predict(combine_pos_testing) %>%
+  cbind(combine_pos_testing) %>%
+  accuracy(position,.pred_class) %>%
+  kable()
+
+position_fit %>%
+  predict(combine_pos_testing) %>%
+  cbind(combine_pos_testing) %>%
+  mutate(prediction = ifelse(position == .pred_class, "Correct", "Incorrect")) %>%
+  ggplot(aes(x = fortyyd, y = weight, color = prediction)) +
+  geom_point() +
+  theme(legend.position = "bottom") +
+  scale_color_colorblind() +
+  labs(x = "Weight (lb)", y = "Forty Yard Dash (yd)")
+```
+
+### Linear Regression Model Results
+
+Due to how low the standard deviations for each predictor used in the linear regression model, I am confident in saying that there is evidence to suggest that there is a relationship between a player's height, weight, and arm length in regard to the number of repetitions of a 225-lb bench press they can perform.
 
 
+### KNN Model Results
 
+Since the KNN model includes observations which have zeros for one or more values, it is impossible to conclude whether there is a relationship between a player's combine metrics and what group of positions a player is most likely to belong to. However, with the given data and KNN model, one would come to the "conclusion" that there is no relationship between a player's combine statistics and area they would play on the field. If I were to improve this model, I would gather data which was complete, and greater in quantity. I know complete versions of this data exists because the NFL hosts their combine results [here](https://www.nfl.com/combine/tracker/live-results/). Additionally, I would change the categories to ones which are used in the NFL, and ones which have more rigorous definitions.
 
-
-
+# Conclusions
 
 
 
