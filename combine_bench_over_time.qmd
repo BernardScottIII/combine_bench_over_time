@@ -4,11 +4,13 @@ author: "BMS"
 institute: University of Scranton
 format: html
 editor: visual
+code-fold: true
+warning: false
 ---
 
-# Project Component 3
-
 ```{r}
+#| output: false
+
 library(tidyverse)
 library(ggthemes)
 library(modeldata)
@@ -30,7 +32,52 @@ condensed_combine <- combine %>%
 glimpse(condensed_combine)
 ```
 
-## Question 1: What is the distribution of the number of bench press reps for every year included in the data set?
+# Executive Summary
+
+In this project I explore how the strength of NFL Combine participants has changed over time. I will take as a case study the [available combine data](https://nflsavant.com/about.php) from the years 1999 to 2015 to assess how many repetitions of 225-lb bench press each player has completed. Through my exploratory data analysis, I have found that the average number of bench press repetitions does increase over the observed time period. With the use of inferential and predictive models, I found several predictors which effectively predict the number of bench press repetitions a player can perform. Additionally, I used a KNN model which attempted to determine where a player plays on the field given their Combine statistics. However, my model suggests there is no clear relationship between a player's Combine statistics and their position. In an attempt to find a more positive result, I grouped multiple positions into four groups: Offensive Line, Offensive Backfield, Defensive Line, and Defensive Backfield. Despite the generalizations, there was still no clear evidence which supports the premise that a player's Combine statistics can allow someone to predict where they play on the field.
+
+# Background
+
+[The National Football League](https://en.wikipedia.org/wiki/National_Football_League) (NFL) is a professional athletics organization consisting of 32 teams equally separated into two conferences, with each conference consisting of 4-team divisions. Every year in March, the NFL hosts a recruiting event called the [NFL Draft](https://en.wikipedia.org/wiki/National_Football_League_Draft). In the NFL Draft, every NFL Team has the opportunity to have an exclusive right to negotiate with prospective players and sign them to their team. To assess the talent and ability of each player, players will showcase their skills in front of NFL coaches, general managers, and scouting officials at the [NFL Scouting Combine](https://en.wikipedia.org/wiki/NFL_Scouting_Combine). In the Combine, players participate in a range of events displaying their skills, including a 40-yard dash, vertical jump test, broad jump test, and the bench press test, which will be the focus of this project.
+
+## Initial Research Question
+
+Before my exploratory data analysis, my initial research question was to investigate how a player's performance in their NFL Combine appearance impacts the number of NFL teams they will play on throughout their careers. NFL players can make appearances on several teams throughout their careers, as the result of contract expiration, a transaction (trade) between two teams, or a release of a player to Free-Agency, colloquially known as dropping a player. However, the data set I chose to explore did not record every team each individual player was ever a part of. Instead, it only contained the first team the player was a member of. As a result, I amended my research question to investigate an attribute the data set had plentiful data on, which is the number of bench press repetitions each Combine participant could perform during their showcase. **Hence, I would like to know which biometrics of Combine participants are the best predictors of the number of bench press repetitions one can perform?**
+
+## Approach to Research
+
+In order to address my initial research question, I will study the relationships between the number of bench press repetitions and various relevant biometrics collected during the Combine. The main part of this project will be assessing 
+
+# Data Collection and Documentation
+
+To address my research question, I will use the data set [1999 to 2015 Combine Data](https://nflsavant.com/about.php), which was compiled by Daren Willman using "publicly-available NFL play-by-play data on the internet" (Willman). I obtained this data set as a CSV file from [NFLSavant.com](https://nflsavant.com), a free website designed to provide NFL data through an accessible user interface. Daren Willman curates and updates this data set to allow anyone to see and use this data. The data set I am using samples exclusively those who participated in the NFL Combine from 1999 to 2015, totaling nearly 4,946 players.
+
+## Combine Data
+
+The data from the link provided by Willman's website is in `.csv` format. For this project, I am storing the data as a `.csv` locally in this project's repository. The data in its original form is tabular, and initially included 4,947 rows and 26 columns. Each column contains attributes of each athlete, including biometrics like their `height`, `weight`, `wingspan`, and athletic metrics including `bench` (number of repitions of 225 lb bench press), `vertical` (jumping height), and `fortyyd` (40 yd sprint time). Each row is a unique player which participated in the NFL combine. This data set is self-contained, as there are no external resources or dependencies required to analyze this data set.
+
+### Cleaning Combine Data
+
+The only errors present in this data set were two rows which appeared to have their values offset by two columns, making them unusable for exploratory data analysis. The only cleaning of the `combine` data set was to remove the two previously mentioned problematic rows. I simply ran a command to `filter()` out the two rows where the player's `height` was equal to `NA`, and stored the result into a new data frame, `clean_combine`.
+
+```{r}
+clean_combine <- combine %>%
+  filter(!is.na(heightfeet))
+
+glimpse(clean_combine)
+
+write_csv(clean_combine, "data/clean_combine.csv")
+```
+
+## Data Repository
+
+This file was uploaded as a `.zip` file to both the "Semester Project Component 2" and "Data Package Assignment" dropboxes.
+
+Additionally, this project is hosted on a GitHub repository which can be found [here](https://github.com/BernardScottIII/data_package_assignment_scott). If you do not have access to this repo, please contact me.
+
+# Exploratory Data Analysis
+
+## Potential Response Variables
 
 I can answer this question by categorizing the rows according to the year, then plotting a histogram of the `bench` variable which contains values from rows with a specified year. In other words, I can make seventeen plots which counts the possible number of bench press reps and how often they occur.
 
@@ -47,6 +94,7 @@ for(yr in 1999:2015) {
 }
 
 ```
+
 All of these graphs suggest that the average is some value less than or equal to 20 reps. To verify this claim, I will plot the average number of bench press reps of all players for every year in one graph.
 
 ```{r}
@@ -63,9 +111,91 @@ condensed_combine %>%
 
 This graph supports my conclusion that the number of bench press reps was some value under 20. Furthermore, this graph shows that the average number of bench press reps is trending upward from 1999 to 2015.
 
-## Question 2: Does the weight of a player in the combine have an impact on their number of bench press repitions?
+## Potential Predictor Variables
 
-To answer this question, I will take a similar approach to answering the last one, by starting with plotting graphs relating every player's weight to their number of bench press repetitions. One graph for each year between 1999 and 2015.
+As previously stated, I will only consider statistics about a player which would have an impact on their bench press repetitions. Biometrics I consider to be relevant are ones which impact the parts of the body directly involved in the bench press movement. With this criteria, I will select three variables to study, which include a player's weight, arm length, and height. Other statistics included in the data set, like the 40-yard dash time and broad jump distance, I would not consider to be relevant because those tests do not use parts of the body which are used in the motion of performing a bench press.
+
+### Player Weight
+
+A player's weight will have an impact on the number of bench press repetitions a player can perform because the more muscle mass players have, the more likely it is for them to perform a higher number of bench press repetitions compared to those who have less muscle mass.
+
+```{r}
+condensed_combine %>%
+  ggplot(aes(x = weight)) +
+  geom_histogram(bins=60)
+```
+
+Since this project is looking at the relationship between weight and number of bench press repetitions over several years, it is useful to understand how the average weight of NFL players has changed from 1999 to 2015.
+
+```{r}
+condensed_combine %>%
+  group_by(year) %>%
+  summarise(mean_weight = mean(weight, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = mean_weight)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1999:2015) +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(axis.text.x = element_text(angle=45)) + 
+  labs(x = "Year", y = "Average Weight (lbs)", title = "Average Weight by Year")
+```
+
+The negative relationship between average weight and time is interesting for several reasons. First, it is important to consider that the roster size for each NFL team was recently increased to 53 (46 active and 7 inactive) players in 2011. This recent increase in roster could possibly lead to an influx of "lighter" specialist players into the league ([https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game](https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game.)).
+
+### Player Height
+
+Similar to a player's weight, their height could have an impact on the number of bench press repetitions they may be able to perform. This biometric is interesting because players with different heights will have different centers of mass. Additionally, shorter players tend to have shorter arms, which could impact a player's number of bench press repetitions. 
+
+```{r}
+condensed_combine %>%
+  ggplot(aes(x = heightinchestotal)) +
+  geom_histogram(bins = 60)
+```
+
+Similarly to the scenario with the weight, a possible explanation for the decrease in the average height could be the increased amount of players teams can roster. The average could be decreasing due to the fact that NFL teams can have more players on their rosters, but there has been no increase to the number of players on the field during a game, suggesting that teams are likely to fill those roster spots with players who are shorter on average.
+
+```{r}
+condensed_combine %>%
+  group_by(year) %>%
+  summarise(mean_heightinchestotal = mean(heightinchestotal, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = mean_heightinchestotal)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1999:2015) +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(axis.text.x = element_text(angle=45)) + 
+  labs(x = "Year", y = "Average Height (in)", title = "Average Height by Year")
+```
+
+### Player Arm Length
+
+A player's arm length is most likely the most significant predictor of the number of bench press repetitions a player can perform because there is a direct relationship between the length of a player's arm and the distance a player needs to move the barbell to complete a single repetition of a 225-lb bench press. Hence, it is logical to conclude that the shorter a player's arms are, the more repetitions of bench press a player is potentially capable of performing.
+
+```{r}
+condensed_combine %>%
+  filter(arms != 0) %>%
+  ggplot(aes(x = arms)) +
+  geom_histogram(bins = 60)
+```
+
+Upon further inspection, it is clear that the data accounting for the length of Combine participant's arms is incomplete, as filtering out all observations which have `0` as the `arms` value completely excludes 1999, 2000, 2001, 2003, 2014, and 2015. The relationship in this graph, similar to the previous two predictor variables, could possibly be explained by the increased roster size.
+
+```{r}
+condensed_combine %>%
+  filter(arms != 0) %>%
+  group_by(year) %>%
+  summarise(mean_arms = mean(arms, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = mean_arms)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1999:2015) +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(axis.text.x = element_text(angle=45)) + 
+  labs(x = "Year", y = "Average Arm Length (in)", title = "Average Arm Length by Year")
+```
+
+## Variable Relationships
+
+### Player Weight and Number of Repetitions
+
+To explore the relationship between these two variables, I will start with plotting graphs relating every player's weight to their number of bench press repetitions. One graph for each year between 1999 and 2015.
 
 ```{r}
 bench_weight <- function(yr) {
@@ -81,37 +211,51 @@ for(year in 1999:2015) {
 }
 ```
 
-Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant's body weight and their number of bench press repetitions. To summarize this data, I will create a plot graphing the average weight of all players within my data set and separate them by the position they play.
+Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant's body weight and their number of bench press repetitions. To summarize this data, I willcreate a plot graphing the relationship between the average weight of players for each number of bench press repetitions performed.
 
 ```{r}
 condensed_combine %>%
   filter(position != "OC") %>%
-  group_by(position) %>%
+  group_by(bench) %>%
   summarise(mean_weight = mean(weight, na.rm = TRUE)) %>%
-  ggplot(aes(x = position, y = mean_weight)) +
+  ggplot(aes(x = bench, y = mean_weight)) +
   geom_bar(stat = "identity")
 ```
 
-This graph shows that the lineman positions, C, DE, DT, LS, OG, OT, and even TE, tend to weigh more than their backfield counterparts.
+This graph suggests that on average, players who perform more bench press repetitions tend to be heavier than those who perform a fewer number of bench press repetitions.
 
-## Question 3: Is the number of bench press repetitions different depending on a player's position?
+### Player Height and Number of Repetitions
 
-Many football spectators know that football is a game where individuals play specific positions, and hence have training and nutrition regimens designed to make those players better at their positions. A consequence of this is that lineman are significantly heavier than their backfield counterparts. This observation serves as the main inspiration for this question.
+To explore the relationship between these two variables, I will take a similar approach to exploring the previous relationship, by starting with plotting graphs relating every player's height to their number of bench press repetitions. One graph for each year between 1999 and 2015.
 
-To answer this question, I will plot the average number of bench press repetitions for players, grouped by the position of the player.
+```{r}
+bench_weight <- function(yr) {
+  plot(condensed_combine %>%
+    filter(bench > 0 & year == yr & heightinchestotal > 0) %>%
+    ggplot(aes(x = bench, y = heightinchestotal)) +
+    geom_point() +
+    geom_smooth(method=lm, se=FALSE))
+}
+
+for(year in 1999:2015) {
+  bench_weight(year)
+}
+```
+
+Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant's height and their number of bench press repetitions. To summarize this data, I will create a plot graphing the relationship between the average height of players for each number of bench press repetitions performed.
 
 ```{r}
 condensed_combine %>%
   filter(position != "OC") %>%
-  group_by(position) %>%
-  summarise(mean_bench = mean(bench, na.rm = TRUE)) %>%
-  ggplot(aes(x = position, y = mean_bench)) +
+  group_by(bench) %>%
+  summarise(mean_heightinchestotal = mean(heightinchestotal, na.rm = TRUE)) %>%
+  ggplot(aes(x = bench, y = mean_heightinchestotal)) +
   geom_bar(stat = "identity")
 ```
 
-This graph suggests that players playing different positions on a football team have different bench press repetition averages.
+This graph shows that there is little correlation between the number of bench press repetitions a player can perform and the average height of a player who can perform that specific number of bench press repetitions.
 
-## Question 4: Does the length of a player's arms impact the number of bench press reps they can do?
+### Player Arm Length and Number of Repetitions
 
 The body part directly involved with performing the exercise is the arm, which travels up and down in a path parallel to the ground. However, this distance traveled is different for every player because every player's arm length is different. I will create a plot to investigate the potential relationship between a player's wingspan and their number of bench press reps.
 
@@ -148,25 +292,44 @@ condensed_combine %>%
   geom_smooth(method=lm, se=FALSE)
 ```
 
-However, on average, this plot suggests that there is a negative relationship between arm length and number of bench press repetitions, which contradicts my initial investigation of this question.
+The first histogram shows that, excluding the outliers, there is an inverse relationship between the number of bench press repetitions, and the average length of the arms of players who perform that specific number of bench press repetitioons. Additionally, on average, the second plot suggests that there is a negative relationship between arm length and number of bench press repetitions, which contradicts my initial investigation of this question.
+
+## Further Exploratory Analysis
+
+### Is the number of bench press repetitions different depending on a player's position?
+
+Many football spectators know that football is a game where individuals play specific positions, and hence have training and nutrition regimens designed to make those players better at their positions. A consequence of this is that lineman are significantly heavier than their backfield counterparts. This observation serves as the main inspiration for this question.
+
+To answer this question, I will plot the average number of bench press repetitions for players, grouped by the position of the player.
+
+```{r}
+condensed_combine %>%
+  filter(position != "OC") %>%
+  group_by(position) %>%
+  summarise(mean_bench = mean(bench, na.rm = TRUE)) %>%
+  ggplot(aes(x = position, y = mean_bench)) +
+  geom_bar(stat = "identity")
+```
+
+This graph suggests that players playing different positions on a football team have different bench press repetition averages.
 
 ## Conclusion
 
 From the questions asked above, I now have a better understanding of the combine data set.I know that players participating in the NFL Combine from 1999 to 2015 bench press 225 pounds for 15 repetitions on average in 1999, and that average has grown to just under 17 repetitions by 2015. Furthermore, I can expect that players which play certain positions on a NFL football team, such as those playing lineman positions, have an increased likelihood of being able to perform more bench press repetitions than their backfield counterpart. This presumption is supported by my investigation which suggested that weight and arm length have an impact on the number of repetitions a player can perform.
 
-# Project Component 4
+# Models
 
-## Models
+## Linear Regression
 
-### Linear Regression
 For the variables I have explored, I will use a linear regression to assess whether there is a relationship between the number of bench press repetitions a player can perform and several biometrics, including weight, height, and arm length.
 
-### KNN
+## KNN
+
 Another model I will use is the K-NN model, in order to investigate the potential relationship between a player's position and their combine statistics, including bench, height, weight, and arm length.
 
-## Model Results
+# Model Results
 
-### Predictors of Number of Repetitions
+## Predictors of Number of Repetitions
 
 The following figure shows the linear regression results, and the error bars represent the standard deviation for each term. Rows in the data set which have values of zero were not included in this linear regression, meaning that there is evidence to suggest a relationship between a combine player's height, wingspan, and weight and the number of repetitions of 225-lb bench they can perform.
 
@@ -237,7 +400,7 @@ lm_tidy %>%
   )
 ```
 
-### Predictors of Player Position
+## Predictors of Player Position
 
 This figure displays a KNN model which characterizes what position a combine participant is most likely to be playing given a number of biometrics, including weight, wingspan, hand size, and multiple athletic statistics including ten, twenty, and forty yard dash times, three cone and twenty yard shuttle times, jump height, jump distance, and number of bench press repetitions. With the given data set, removing all rows with any values of zero would reduce the number of rows to an abysmally low number where no meaningful conclusions could be made. Since values of zero are included in this model, it is impossible to confirm or deny and evidence for/against a relationship between where a player plays on the field and the previously mentioned biometrics. This model will categorize players based on the previously mentioned biometrics by where they would play on the field, which includes the offensive line, defensive line, offensive backfield, defensive backfield, and special teams.
 
@@ -314,12 +477,11 @@ position_fit %>%
   labs(x = "Weight (lb)", y = "Forty Yard Dash (yd)")
 ```
 
-### Linear Regression Model Results
+## Linear Regression Model Results
 
 Due to how low the standard deviations for each predictor used in the linear regression model, I am confident in saying that there is evidence to suggest that there is a relationship between a player's height, weight, and arm length in regard to the number of repetitions of a 225-lb bench press they can perform.
 
-
-### KNN Model Results
+## KNN Model Results
 
 Since the KNN model includes observations which have zeros for one or more values, it is impossible to conclude whether there is a relationship between a player's combine metrics and what group of positions a player is most likely to belong to. However, with the given data and KNN model, one would come to the "conclusion" that there is no relationship between a player's combine statistics and area they would play on the field. If I were to improve this model, I would gather data which was complete, and greater in quantity. I know complete versions of this data exists because the NFL hosts their combine results [here](https://www.nfl.com/combine/tracker/live-results/). Additionally, I would change the categories to ones which are used in the NFL, and ones which have more rigorous definitions.
 
@@ -327,26 +489,6 @@ Since the KNN model includes observations which have zeros for one or more value
 
 
 
+# Acknolwedgements
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# References
