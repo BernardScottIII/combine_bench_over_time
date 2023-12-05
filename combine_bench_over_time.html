@@ -108,356 +108,581 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggthemes)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(modeldata)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>))</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>combine <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/clean_combine.csv"</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(combine)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="ot">&lt;-</span> combine <span class="sc">%&gt;%</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">position =</span> <span class="fu">fct_collapse</span>(position,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"S"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"FS"</span>, <span class="st">"SS"</span>),</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LB"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"OLB"</span>, <span class="st">"ILB"</span>),</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DT"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"DT"</span>, <span class="st">"NT"</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  ))</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(condensed_combine)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
 <section id="executive-summary" class="level1">
 <h1>Executive Summary</h1>
+<p>In this project I explore how the strength of NFL Combine participants has changed over time. I will take as a case study the <a href="https://nflsavant.com/about.php">available combine data</a> from the years 1999 to 2015 to assess how many repetitions of 225-lb bench press each player has completed. Through my exploratory data analysis, I have found that the average number of bench press repetitions does increase over the observed time period. With the use of inferential and predictive models, I found several predictors which effectively predict the number of bench press repetitions a player can perform. Additionally, I used a KNN model which attempted to determine where a player plays on the field given their Combine statistics. However, my model suggests there is no clear relationship between a player’s Combine statistics and their position. In an attempt to find a more positive result, I grouped multiple positions into four groups: Offensive Line, Offensive Backfield, Defensive Line, and Defensive Backfield. Despite the generalizations, there was still no clear evidence which supports the premise that a player’s Combine statistics can allow someone to predict where they play on the field.</p>
 </section>
 <section id="background" class="level1">
 <h1>Background</h1>
+<p><a href="https://en.wikipedia.org/wiki/National_Football_League">The National Football League</a> (NFL) is a professional athletics organization consisting of 32 teams equally separated into two conferences, with each conference consisting of 4-team divisions. Every year in March, the NFL hosts a recruiting event called the <a href="https://en.wikipedia.org/wiki/National_Football_League_Draft">NFL Draft</a>. In the NFL Draft, every NFL Team has the opportunity to have an exclusive right to negotiate with prospective players and sign them to their team. To assess the talent and ability of each player, players will showcase their skills in front of NFL coaches, general managers, and scouting officials at the <a href="https://en.wikipedia.org/wiki/NFL_Scouting_Combine">NFL Scouting Combine</a>. In the Combine, players participate in a range of events displaying their skills, including a 40-yard dash (Shown in <a href="#fig-forty_yard_dash">Figure 1</a>), vertical jump test, broad jump test, and the bench press test, which will be the focus of this project.</p>
+<div id="fig-forty_yard_dash" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="NFL_Combine_40_yard_dash_recent.jpg" class="img-fluid figure-img" style="width:70.0%"></p>
+<figcaption class="figure-caption">Figure&nbsp;1: Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from (“Washington’s John Ross sets 40-yard dash record at NFL Scouting Combine” <a href="https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888">https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888</a>)</figcaption>
+</figure>
+</div>
 <section id="initial-research-question" class="level2">
 <h2 class="anchored" data-anchor-id="initial-research-question">Initial Research Question</h2>
+<p>Before my exploratory data analysis, my first research question was to investigate how a player’s performance in their NFL Combine appearance impacts the number of NFL teams they will play on throughout their careers. NFL players can make appearances on several teams throughout their careers, as the result of contract expiration, a transaction (trade) between two teams, or a release of a player to Free-Agency, colloquially known as dropping a player. However, the data set I chose to explore did not record every team each individual player was ever a part of. Instead, it only contained the first team the player was a member of. As a result, I amended my research question to investigate an attribute the data set had plentiful data on, which is the number of bench press repetitions each Combine participant could perform during their showcase. <strong>Hence, I would like to know which biometrics of Combine participants are the best predictors of the number of bench press repetitions one can perform?</strong></p>
 </section>
 <section id="approach-to-research" class="level2">
 <h2 class="anchored" data-anchor-id="approach-to-research">Approach to Research</h2>
+<p>In order to address my initial research question, I will study the relationships between the number of bench press repetitions and various relevant biometrics collected during the Combine. In the NFL Scouting Combine, each player is assessed for the number of repetitions of a 225-lb bench press one can perform lying down on a bench similar to those found in commercial gyms, and depicted in <a href="#fig-combine_bench_press">Figure 2</a>. The main part of this project will be assessing how the number of bench press repetitions has increased from 1999 to 2015, since those are the years the data set includes data for.</p>
+<div id="fig-combine_bench_press" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="NFL_Combine_Bench_Front.avif" class="img-fluid figure-img" style="width:70.0%"></p>
+<figcaption class="figure-caption">Figure&nbsp;2: Official Bench Press bench used in the NFL Scouting Combine, image from (“NFL Combine: Which player did the most bench-press reps on Friday?” <a href="https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html">https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html</a>)</figcaption>
+</figure>
+</div>
 </section>
 </section>
 <section id="data-collection-and-documentation" class="level1">
 <h1>Data Collection and Documentation</h1>
+<p>To address my research question, I will use the data set <a href="https://nflsavant.com/about.php">1999 to 2015 Combine Data</a>, which was compiled by Daren Willman using “publicly-available NFL play-by-play data on the internet” (Willman). I obtained this data set as a CSV file from <a href="https://nflsavant.com">NFLSavant.com</a>, a free website designed to provide NFL data through an accessible user interface. Daren Willman curates and updates this data set to allow anyone to see and use this data. The data set I am using samples exclusively those who participated in the NFL Combine from 1999 to 2015, totaling nearly 4,946 players.</p>
+<section id="combine-data" class="level2">
+<h2 class="anchored" data-anchor-id="combine-data">Combine Data</h2>
+<p>The data from the link provided by Willman’s website is in <code>.csv</code> format. For this project, I am storing the data as a <code>.csv</code> locally in this project’s repository. The data in its original form is tabular, and initially included 4,947 rows and 26 columns. Each column contains attributes of each athlete, including biometrics like their <code>height</code>, <code>weight</code>, <code>wingspan</code>, and athletic metrics including <code>bench</code> (number of repitions of 225 lb bench press), <code>vertical</code> (jumping height), and <code>fortyyd</code> (40 yd sprint time). Each row is a unique player which participated in the NFL combine. This data set, shown in <a href="#tbl-condensed-combine">Table 1</a> is self-contained, as there are no external resources or dependencies required to analyze this data set.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(name, position, heightinchestotal, weight, arms) <span class="sc">%&gt;%</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="tbl-condensed-combine" class="anchored">
+<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<caption>Table&nbsp;1: Select columns of the first five rows of the cleaned and condensed <code>combine</code> data set.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">name</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">position</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">heightinchestotal</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">weight</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">arms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Ameer Abdullah</td>
+<td style="text-align: left;">RB</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: right;">205</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Nelson Agholor</td>
+<td style="text-align: left;">WR</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">198</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jay Ajayi</td>
+<td style="text-align: left;">RB</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">221</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kwon Alexander</td>
+<td style="text-align: left;">LB</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">227</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mario Alford</td>
+<td style="text-align: left;">WR</td>
+<td style="text-align: right;">68</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+</div>
+</div>
+<section id="cleaning-combine-data" class="level3">
+<h3 class="anchored" data-anchor-id="cleaning-combine-data">Cleaning Combine Data</h3>
+<p>The only errors present in this data set were two rows which appeared to have their values offset by two columns, making them unusable for exploratory data analysis. The only cleaning of the <code>combine</code> data set was to remove the two previously mentioned problematic rows. I simply ran a command to <code>filter()</code> out the two rows where the player’s <code>height</code> was equal to <code>NA</code>, and stored the result into a new data frame, <code>clean_combine</code>, shown in <a href="#tbl-clean-combine">Table 2</a>.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>clean_combine <span class="ot">&lt;-</span> combine <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(heightfeet))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>clean_combine <span class="sc">%&gt;%</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(name, position, heightinchestotal, weight, arms) <span class="sc">%&gt;%</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="tbl-clean-combine" class="anchored">
+<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<caption>Table&nbsp;2: Select columns of the first five rows of cleaned <code>combine</code> data set.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">name</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">position</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">heightinchestotal</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">weight</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">arms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Ameer Abdullah</td>
+<td style="text-align: left;">RB</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: right;">205</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Nelson Agholor</td>
+<td style="text-align: left;">WR</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">198</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jay Ajayi</td>
+<td style="text-align: left;">RB</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">221</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kwon Alexander</td>
+<td style="text-align: left;">OLB</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">227</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mario Alford</td>
+<td style="text-align: left;">WR</td>
+<td style="text-align: right;">68</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(clean_combine, <span class="st">"data/clean_combine.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 </section>
-<section id="combine-data" class="level1">
-<h1>Combine Data</h1>
+</section>
 </section>
 <section id="exploratory-data-analysis" class="level1">
 <h1>Exploratory Data Analysis</h1>
 <section id="potential-response-variables" class="level2">
 <h2 class="anchored" data-anchor-id="potential-response-variables">Potential Response Variables</h2>
-</section>
-<section id="potential-predictor-variables" class="level2">
-<h2 class="anchored" data-anchor-id="potential-predictor-variables">Potential Predictor Variables</h2>
-</section>
-<section id="variable-relationships" class="level2">
-<h2 class="anchored" data-anchor-id="variable-relationships">Variable Relationships</h2>
-<section id="question-1-what-is-the-distribution-of-the-number-of-bench-press-reps-for-every-year-included-in-the-data-set" class="level3">
-<h3 class="anchored" data-anchor-id="question-1-what-is-the-distribution-of-the-number-of-bench-press-reps-for-every-year-included-in-the-data-set">Question 1: What is the distribution of the number of bench press reps for every year included in the data set?</h3>
-<p>I can answer this question by categorizing the rows according to the year, then plotting a histogram of the <code>bench</code> variable which contains values from rows with a specified year. In other words, I can make seventeen plots which counts the possible number of bench press reps and how often they occur.</p>
+<p>I can answer this question by categorizing the rows according to the year, then plotting a histogram of the <code>bench</code> variable which contains values from rows with a specified year. In other words, I can make seventeen plots, shown in <a href="#fig-bench-reps-hist">Figure 3</a> which counts the possible number of bench press reps and how often they occur.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>plot_bench <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(bench <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> year <span class="sc">==</span> yr) <span class="sc">%&gt;%</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench)) <span class="sc">+</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_bar</span>())</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(yr <span class="cf">in</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) {</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_bench</span>(yr)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-3.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-4.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-5.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-6.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-7.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-8.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-9.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-10.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-11.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-12.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-13.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-14.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-15.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-16.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-2-17.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>All of these graphs suggest that the average is some value less than or equal to 20 reps. To verify this claim, I will plot the average number of bench press reps of all players for every year in one graph.</p>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_bench =</span> <span class="fu">mean</span>(bench, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> mean_bench)) <span class="sc">+</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) <span class="sc">+</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">45</span>)) <span class="sc">+</span> </span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"Average Bench Press Reps"</span>, <span class="at">title =</span> <span class="st">"Average Bench Press Reps by Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
-</div>
-</div>
-<p>This graph supports my conclusion that the number of bench press reps was some value under 20. Furthermore, this graph shows that the average number of bench press reps is trending upward from 1999 to 2015.</p>
-</section>
-</section>
-<section id="further-exploratory-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="further-exploratory-analysis">Further Exploratory Analysis</h2>
-<section id="question-2-does-the-weight-of-a-player-in-the-combine-have-an-impact-on-their-number-of-bench-press-repitions" class="level3">
-<h3 class="anchored" data-anchor-id="question-2-does-the-weight-of-a-player-in-the-combine-have-an-impact-on-their-number-of-bench-press-repitions">Question 2: Does the weight of a player in the combine have an impact on their number of bench press repitions?</h3>
-<p>To answer this question, I will take a similar approach to answering the last one, by starting with plotting graphs relating every player’s weight to their number of bench press repetitions. One graph for each year between 1999 and 2015.</p>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bench_weight <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(condensed_combine <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>plot_bench <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  condensed_combine <span class="sc">%&gt;%</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(bench <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> year <span class="sc">==</span> yr) <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> weight)) <span class="sc">+</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>))</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(year <span class="cf">in</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) {</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bench_weight</span>(year)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench)) <span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_bar</span>() <span class="sc">+</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.y=</span><span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Reps"</span>, <span class="at">y =</span> <span class="st">"Count"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>bench_reps_per_year <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>, plot_bench)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(<span class="at">plotlist =</span> bench_reps_per_year, <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">nrow =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-5.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-6.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-7.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-8.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-9.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-10.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-11.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-12.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-13.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-14.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-15.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-16.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-4-17.png" class="img-fluid" width="672"></p>
+<div id="fig-bench-reps-hist" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-bench-reps-hist-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;3: Histogram for every year included in the data set of the total occurrences of every value of bench press repetitions.</figcaption>
+</figure>
 </div>
 </div>
-<p>Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant’s body weight and their number of bench press repetitions. To summarize this data, I will create a plot graphing the average weight of all players within my data set and separate them by the position they play.</p>
+</div>
+<p>All of these graphs suggest that the average is some value less than or equal to 20 reps. To verify this claim, I will plot the average number of bench press reps of all players for every year in <a href="#fig-bench-over-time">Figure 4</a>.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(position) <span class="sc">%&gt;%</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_weight =</span> <span class="fu">mean</span>(weight, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> position, <span class="at">y =</span> mean_weight)) <span class="sc">+</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_bench =</span> <span class="fu">mean</span>(bench, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> mean_bench)) <span class="sc">+</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) <span class="sc">+</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">45</span>)) <span class="sc">+</span> </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"Average Bench Press Reps"</span>, <span class="at">title =</span> <span class="st">"Average Bench Press Reps by Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+<div id="fig-bench-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-bench-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;4: Exploratory plot showing the average number of bench press repetitions from 1999 to 2015.</figcaption>
+</figure>
 </div>
 </div>
-<p>This graph shows that the lineman positions, C, DE, DT, LS, OG, OT, and even TE, tend to weigh more than their backfield counterparts.</p>
+</div>
+<p>This graph supports my conclusion that the number of bench press reps was some value under 20. Furthermore, this graph shows that the average number of bench press reps is trending upward from 1999 to 2015.</p>
 </section>
-<section id="question-3-is-the-number-of-bench-press-repetitions-different-depending-on-a-players-position" class="level3">
-<h3 class="anchored" data-anchor-id="question-3-is-the-number-of-bench-press-repetitions-different-depending-on-a-players-position">Question 3: Is the number of bench press repetitions different depending on a player’s position?</h3>
-<p>Many football spectators know that football is a game where individuals play specific positions, and hence have training and nutrition regimens designed to make those players better at their positions. A consequence of this is that lineman are significantly heavier than their backfield counterparts. This observation serves as the main inspiration for this question.</p>
-<p>To answer this question, I will plot the average number of bench press repetitions for players, grouped by the position of the player.</p>
+<section id="potential-predictor-variables" class="level2">
+<h2 class="anchored" data-anchor-id="potential-predictor-variables">Potential Predictor Variables</h2>
+<p>As previously stated, I will only consider statistics about a player which would have an impact on their bench press repetitions. Biometrics I consider to be relevant are ones which impact the parts of the body directly involved in the bench press movement. With this criteria, I will select three variables to study, which include a player’s weight, arm length, and height. Other statistics included in the data set, like the 40-yard dash time and broad jump distance, I would not consider to be relevant because those tests do not use parts of the body which are used in the motion of performing a bench press.</p>
+<section id="player-weight" class="level3">
+<h3 class="anchored" data-anchor-id="player-weight">Player Weight</h3>
+<p>A player’s weight will have an impact on the number of bench press repetitions a player can perform because the more muscle mass players have, the more likely it is for them to perform a higher number of bench press repetitions compared to those who have less muscle mass. <a href="#fig-weight-hist">Figure 5</a> will give us an idea of what types of players are included in this data set.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(position) <span class="sc">%&gt;%</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_bench =</span> <span class="fu">mean</span>(bench, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> position, <span class="at">y =</span> mean_bench)) <span class="sc">+</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> weight)) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins=</span><span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Weight (lbs)"</span>, <span class="at">y =</span> <span class="st">"Number of Players"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+<div id="fig-weight-hist" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-weight-hist-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;5: Histogram of combine participant weight values.</figcaption>
+</figure>
 </div>
 </div>
-<p>This graph suggests that players playing different positions on a football team have different bench press repetition averages.</p>
-</section>
-<section id="question-4-does-the-length-of-a-players-arms-impact-the-number-of-bench-press-reps-they-can-do" class="level3">
-<h3 class="anchored" data-anchor-id="question-4-does-the-length-of-a-players-arms-impact-the-number-of-bench-press-reps-they-can-do">Question 4: Does the length of a player’s arms impact the number of bench press reps they can do?</h3>
-<p>The body part directly involved with performing the exercise is the arm, which travels up and down in a path parallel to the ground. However, this distance traveled is different for every player because every player’s arm length is different. I will create a plot to investigate the potential relationship between a player’s wingspan and their number of bench press reps.</p>
+</div>
+<p>Since this project is looking at the relationship between weight and number of bench press repetitions over several years, it is useful to understand how the average weight of NFL players has changed from 1999 to 2015. We can observe this relationship in <a href="#fig-weight-over-time">Figure 6</a></p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bench_arms <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(bench <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> year <span class="sc">==</span> yr <span class="sc">&amp;</span> position <span class="sc">!=</span> <span class="st">"K"</span> <span class="sc">&amp;</span> arms <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> arms)) <span class="sc">+</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>))</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(year <span class="cf">in</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) {</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bench_arms</span>(year)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_weight =</span> <span class="fu">mean</span>(weight, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> mean_weight)) <span class="sc">+</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) <span class="sc">+</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">45</span>)) <span class="sc">+</span> </span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"Average Weight (lbs)"</span>, <span class="at">title =</span> <span class="st">"Average Weight by Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-3.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-4.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-5.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-6.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-7.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-8.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-9.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-10.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-11.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-12.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-13.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-14.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-15.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-16.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-7-17.png" class="img-fluid" width="672"></p>
+<div id="fig-weight-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-weight-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;6: Exploratory plot showing the average weight of every player from 1999 to 2015.</figcaption>
+</figure>
 </div>
 </div>
-<p>In the case of my data set, it is evident that the arm length data is incomplete, and will likely remain so for the foreseeable future. However, in the years with plentiful data, it is clear that there is a positive relationship between the number of bench press repetitions and a player’s arm length.</p>
+</div>
+<p>The negative relationship between average weight and time is interesting for several reasons. First, it is important to consider that the roster size for each NFL team was recently increased to 53 (46 active and 7 inactive) players in 2011. This recent increase in roster could possibly lead to an influx of “lighter” specialist players into the league (<a href="https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game.">https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams’%20roster%20sizes,inactive%20players%20before%20each%20game</a>).</p>
+</section>
+<section id="player-height" class="level3">
+<h3 class="anchored" data-anchor-id="player-height">Player Height</h3>
+<p>Similar to a player’s weight, their height, summarized in <a href="#fig-height-hist">Figure 7</a> could have an impact on the number of bench press repetitions they may be able to perform. This biometric is interesting because players with different heights will have different centers of mass. Additionally, shorter players tend to have shorter arms, which could impact a player’s number of bench press repetitions.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bench) <span class="sc">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_arms =</span> <span class="fu">mean</span>(arms, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> mean_arms)) <span class="sc">+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> heightinchestotal)) <span class="sc">+</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins=</span><span class="dv">40</span>)<span class="sc">+</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Height (in)"</span>, <span class="at">y =</span> <span class="st">"Number of Players"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+<div id="fig-height-hist" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-height-hist-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;7: Histogram of combine participant heights.</figcaption>
+</figure>
 </div>
+</div>
+</div>
+<p>Similarly to the scenario with the weight, a possible explanation for the decrease in the average height shown in <a href="#fig-height-over-time">Figure 8</a> could be the increased amount of players teams can roster. The average could be decreasing due to the fact that NFL teams can have more players on their rosters, but there has been no increase to the number of players on the field during a game, suggesting that teams are likely to fill those roster spots with players who are shorter on average.</p>
+<div class="cell">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span> <span class="sc">&amp;</span> year <span class="sc">==</span> <span class="fu">c</span>(<span class="dv">2010</span>, <span class="dv">2011</span>, <span class="dv">2012</span>, <span class="dv">2013</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bench) <span class="sc">%&gt;%</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_arms =</span> <span class="fu">mean</span>(arms, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> mean_arms)) <span class="sc">+</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_heightinchestotal =</span> <span class="fu">mean</span>(heightinchestotal, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> mean_heightinchestotal)) <span class="sc">+</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) <span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">45</span>)) <span class="sc">+</span> </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"Average Height (in)"</span>, <span class="at">title =</span> <span class="st">"Average Height by Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
+<div id="fig-height-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-height-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;8: Exploratory plot showing the average height of every player from 1999 to 2015.</figcaption>
+</figure>
 </div>
 </div>
-<p>However, on average, this plot suggests that there is a negative relationship between arm length and number of bench press repetitions, which contradicts my initial investigation of this question.</p>
+</div>
+</section>
+<section id="player-arm-length" class="level3">
+<h3 class="anchored" data-anchor-id="player-arm-length">Player Arm Length</h3>
+<p>A player’s arm length is most likely the most significant predictor of the number of bench press repetitions a player can perform because there is a direct relationship between the length of a player’s arm and the distance a player needs to move the barbell to complete a single repetition of a 225-lb bench press. Hence, it is logical to conclude that the shorter a player’s arms are, the more repetitions of bench press a player is potentially capable of performing. <a href="#fig-arm-length-hist">Figure 9</a> displays the range and number of arm length values included in this data set.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(arms <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> arms)) <span class="sc">+</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">60</span>) <span class="sc">+</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Arm Length (in)"</span>, <span class="at">y =</span> <span class="st">"Number of Players"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-arm-length-hist" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-arm-length-hist-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;9: Histogram of combine participant arm lengths.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Upon further inspection in <a href="#fig-arm-length-over-time">Figure 10</a>, it is clear that the data accounting for the length of Combine participant’s arms is incomplete, as filtering out all observations which have <code>0</code> as the <code>arms</code> value completely excludes 1999, 2000, 2001, 2003, 2014, and 2015. The relationship in this graph, similar to the previous two predictor variables, could possibly be explained by the increased roster size.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(arms <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_arms =</span> <span class="fu">mean</span>(arms, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> mean_arms)) <span class="sc">+</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>) <span class="sc">+</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">45</span>)) <span class="sc">+</span> </span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"Average Arm Length (in)"</span>, <span class="at">title =</span> <span class="st">"Average Arm Length by Year"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-arm-length-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-arm-length-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;10: Exploratory plot showing the average arm length of every player from 1999 to 2015.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="variable-relationships" class="level2">
+<h2 class="anchored" data-anchor-id="variable-relationships">Variable Relationships</h2>
+<section id="player-weight-and-number-of-repetitions" class="level3">
+<h3 class="anchored" data-anchor-id="player-weight-and-number-of-repetitions">Player Weight and Number of Repetitions</h3>
+<p>To explore the relationship between these two variables, I will start with plotting graphs relating every player’s weight to their number of bench press repetitions. One graph for each year between 1999 and 2015, shown in <a href="#fig-bench-vs-weight-over-time">Figure 11</a>.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>bench_weight <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(bench <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> year <span class="sc">==</span> yr) <span class="sc">%&gt;%</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> weight)) <span class="sc">+</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.y=</span><span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Reps"</span>, <span class="at">y =</span> <span class="st">"Weight"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>bench_weight_per_year <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>, bench_weight)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(<span class="at">plotlist =</span> bench_weight_per_year, <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">nrow =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-bench-vs-weight-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-bench-vs-weight-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;11: Plot showing relationship between number of bench press repetitions and weight, one plot for each year included in the data set. Weight is in units of pounds (lbs).</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant’s body weight and their number of bench press repetitions. To summarize this data, I will create <a href="#fig-weight-vs-reps">Figure 12</a> graphing the relationship between the average weight of players for each number of bench press repetitions performed.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bench) <span class="sc">%&gt;%</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_weight =</span> <span class="fu">mean</span>(weight, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> mean_weight)) <span class="sc">+</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Press Repetitions"</span>, <span class="at">y =</span> <span class="st">"Average Weight of Player Performing Reps (lbs)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-weight-vs-reps" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-weight-vs-reps-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;12: Graph plotting the relationship between average weight and number of repetitions of bench press.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>This graph suggests that on average, players who perform more bench press repetitions tend to be heavier than those who perform a fewer number of bench press repetitions.</p>
+</section>
+<section id="player-height-and-number-of-repetitions" class="level3">
+<h3 class="anchored" data-anchor-id="player-height-and-number-of-repetitions">Player Height and Number of Repetitions</h3>
+<p>To explore the relationship between these two variables, I will take a similar approach to exploring the previous relationship, by starting with plotting graphs relating every player’s height to their number of bench press repetitions. One graph for each year between 1999 and 2015 is shown in <a href="#fig-bench-vs-height-over-time">Figure 13</a>.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>bench_height <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(bench <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> year <span class="sc">==</span> yr <span class="sc">&amp;</span> heightinchestotal <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> heightinchestotal)) <span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.y=</span><span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Reps"</span>, <span class="at">y =</span> <span class="st">"Height"</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>bench_height_per_year <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>, bench_height)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(<span class="at">plotlist =</span> bench_height_per_year, <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">nrow =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-bench-vs-height-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-bench-vs-height-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;13: Plot showing relationship between number of bench press repetitions and height, one plot for each year included in the data set. Height is in units of inches (in).</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Each graph, along with its own line of best fit, demonstrate that there is a positive relationship between a combine participant’s height and their number of bench press repetitions. To summarize this data, I will create the plot shown in <a href="#fig-height-vs-reps">Figure 14</a> graphing the relationship between the average height of players for each number of bench press repetitions performed.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bench) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_heightinchestotal =</span> <span class="fu">mean</span>(heightinchestotal, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> mean_heightinchestotal)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Press Repetitions"</span>, <span class="at">y =</span> <span class="st">"Average Height of Player Performing Reps (in)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-height-vs-reps" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-height-vs-reps-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;14: Graph plotting the relationship between average height and number of repetitions of bench press.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>This graph shows that there is little correlation between the number of bench press repetitions a player can perform and the average height of a player who can perform that specific number of bench press repetitions.</p>
+</section>
+<section id="player-arm-length-and-number-of-repetitions" class="level3">
+<h3 class="anchored" data-anchor-id="player-arm-length-and-number-of-repetitions">Player Arm Length and Number of Repetitions</h3>
+<p>The body part directly involved with performing the exercise is the arm, which travels up and down in a path parallel to the ground. However, this distance traveled is different for every player because every player’s arm length is different. I will create a plot, shown in <a href="#fig-bench-vs-arm-length-over-time">Figure 15</a> to investigate the potential relationship between a player’s wingspan and their number of bench press reps.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>bench_arms <span class="ot">&lt;-</span> <span class="cf">function</span>(yr) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(bench <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> year <span class="sc">==</span> yr <span class="sc">&amp;</span> position <span class="sc">!=</span> <span class="st">"K"</span> <span class="sc">&amp;</span> arms <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> arms)) <span class="sc">+</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.y=</span><span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Reps"</span>, <span class="at">y =</span> <span class="st">"Arm Length"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>bench_height_per_year <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="dv">1999</span><span class="sc">:</span><span class="dv">2015</span>, bench_arms)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(<span class="at">plotlist =</span> bench_height_per_year, <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">nrow =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-bench-vs-arm-length-over-time" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-bench-vs-arm-length-over-time-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;15: Plot showing relationship between number of bench press repetitions and height, one plot for each year included in the data set. Height is in units of inches (in).</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>In the case of my data set, it is evident that the arm length data is incomplete, and will likely remain so for the foreseeable future. When plotting the average arm length of players who perform specific number of bench press repetitions, in <a href="#fig-arm-length-vs-reps">Figure 16</a>, it is initially unclear as if there exists a relationship between these two variables.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bench) <span class="sc">%&gt;%</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_arms =</span> <span class="fu">mean</span>(arms, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> mean_arms)) <span class="sc">+</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Press Repetitions"</span>, <span class="at">y =</span> <span class="st">"Average Arm Length of Player Performing Reps (in)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-arm-length-vs-reps" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-arm-length-vs-reps-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;16: Graph plotting the relationship between average arm length and number of repetitions of bench press.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-arm-length-vs-reps">Figure 16</a> shows that, excluding the outliers, there is an inverse relationship between the number of bench press repetitions, and the average length of the arms of players who perform that specific number of bench press repetitioons. Additionally, on average, <a href="#fig-arm-length-vs-reps-point">Figure 17</a> suggests that there is a negative relationship between arm length and number of bench press repetitions, which contradicts my initial investigation of this question.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span> <span class="sc">&amp;</span> year <span class="sc">==</span> <span class="fu">c</span>(<span class="dv">2010</span>, <span class="dv">2011</span>, <span class="dv">2012</span>, <span class="dv">2013</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bench) <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_arms =</span> <span class="fu">mean</span>(arms, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> bench, <span class="at">y =</span> mean_arms)) <span class="sc">+</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span>lm, <span class="at">se=</span><span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Bench Press Repetitions"</span>, <span class="at">y =</span> <span class="st">"Average Arm Length of Player Performing Reps (in)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-arm-length-vs-reps-point" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-arm-length-vs-reps-point-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;17: Scatter plot with trend line showing the relationship between average arm length and number of repetitions of bench press.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="further-exploratory-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="further-exploratory-analysis">Further Exploratory Analysis</h2>
+<section id="is-the-number-of-bench-press-repetitions-different-depending-on-a-players-position" class="level3">
+<h3 class="anchored" data-anchor-id="is-the-number-of-bench-press-repetitions-different-depending-on-a-players-position">Is the number of bench press repetitions different depending on a player’s position?</h3>
+<p>Many football spectators know that football is a game where individuals play specific positions, and hence have training and nutrition regimens designed to make those players better at their positions. A consequence of this is that lineman are significantly heavier than their backfield counterparts. This observation serves as the main inspiration for this question.</p>
+<p>To answer this question, I will plot the average number of bench press repetitions for players, grouped by the position of the player in <a href="#fig-pos-vs-reps">Figure 18</a>.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(position <span class="sc">!=</span> <span class="st">"OC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(position) <span class="sc">%&gt;%</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_bench =</span> <span class="fu">mean</span>(bench, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> position, <span class="at">y =</span> mean_bench)) <span class="sc">+</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-pos-vs-reps" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-pos-vs-reps-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;18: Histogram showing the average number of bench press repetitions for every player position, for all years in the data set.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>This graph suggests that players playing different positions on a football team have different bench press repetition averages.</p>
 </section>
 </section>
 <section id="conclusion" class="level2">
@@ -469,196 +694,197 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>Models</h1>
 <section id="linear-regression" class="level2">
 <h2 class="anchored" data-anchor-id="linear-regression">Linear Regression</h2>
-<p>For the variables I have explored, I will use a linear regression to assess whether there is a relationship between the number of bench press repetitions a player can perform and several biometrics, including weight, height, and arm length.</p>
+<p>For the variables I have explored, I will use a linear regression, an example of which shown in <a href="#fig-lin-reg-ex">Figure 19</a>, to assess whether there is a relationship between the number of bench press repetitions a player can perform and several biometrics, including weight, height, and arm length.</p>
+<div id="fig-lin-reg-ex" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="lin_reg_ex.png" class="img-fluid figure-img" style="width:70.0%"></p>
+<figcaption class="figure-caption">Figure&nbsp;19: An example of a linear regression, image from (“Simple linear regression” <a href="https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html">https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html</a>)</figcaption>
+</figure>
+</div>
 </section>
 <section id="knn" class="level2">
 <h2 class="anchored" data-anchor-id="knn">KNN</h2>
-<p>Another model I will use is the K-NN model, in order to investigate the potential relationship between a player’s position and their combine statistics, including bench, height, weight, and arm length.</p>
+<p>Another model, shown in <a href="#fig-knn-ex">Figure 20</a> I will use is the K-Nearest-Neighbors classification model, in order to investigate the potential relationship between a player’s position and their combine statistics, including bench, height, weight, and arm length.</p>
+<div id="fig-knn-ex" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="knn_ex.jpg" class="img-fluid figure-img" style="width:70.0%"></p>
+<figcaption class="figure-caption">Figure&nbsp;20: An example of a KNN Classification, image from (“K-Nearest Neighbors: A Simple Machine Learning Algorithm” <a href="https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/">https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/</a>)</figcaption>
+</figure>
+</div>
 </section>
 </section>
 <section id="model-results" class="level1">
 <h1>Model Results</h1>
 <section id="predictors-of-number-of-repetitions" class="level2">
 <h2 class="anchored" data-anchor-id="predictors-of-number-of-repetitions">Predictors of Number of Repetitions</h2>
-<p>The following figure shows the linear regression results, and the error bars represent the standard deviation for each term. Rows in the data set which have values of zero were not included in this linear regression, meaning that there is evidence to suggest a relationship between a combine player’s height, wingspan, and weight and the number of repetitions of 225-lb bench they can perform.</p>
+<p><a href="#fig-lin-reg">Figure 21</a> shows the linear regression results, and the error bars represent the standard deviation for each term. Rows in the data set which have values of zero were not included in this linear regression, meaning that there is evidence to suggest a relationship between a combine player’s height, wingspan, and weight and the number of repetitions of 225-lb bench they can perform.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(parsnip)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(recipes)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># set seed for reproducability</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4133</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># load the combine dataset (should already be loaded from previous chunks)</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>combine_nums <span class="ot">&lt;-</span> condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(bench, arms, heightinchestotal, weight) <span class="sc">%&gt;%</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(bench <span class="sc">!=</span> <span class="dv">0</span>, arms <span class="sc">!=</span> <span class="dv">0</span>, heightinchestotal <span class="sc">!=</span> <span class="dv">0</span>, weight <span class="sc">!=</span> <span class="dv">0</span>)</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(combine_nums)</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing split</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>combine_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(combine_nums, <span class="at">prop =</span> <span class="fl">0.8</span>)</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing dataset</span></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>combine_training <span class="ot">&lt;-</span> <span class="fu">training</span>(combine_split)</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>combine_testing <span class="ot">&lt;-</span> <span class="fu">testing</span>(combine_split)</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co"># create a recipe for preprocessing</span></span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>combine_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(bench <span class="sc">~</span> ., <span class="at">data =</span> combine_training) <span class="sc">%&gt;%</span></span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>())</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co"># create a linear regression model</span></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>lm_spec <span class="ot">&lt;-</span> <span class="fu">linear_reg</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"lm"</span>)</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="co"># fit the model</span></span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>lm_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(combine_recipe) <span class="sc">%&gt;%</span></span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(lm_spec) <span class="sc">%&gt;%</span></span>
-<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> combine_training)</span>
-<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="co"># make predictions</span></span>
-<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>lm_pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(lm_fit, combine_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(combine_testing)</span>
-<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate the model</span></span>
-<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>lm_eval <span class="ot">&lt;-</span> lm_pred <span class="sc">%&gt;%</span></span>
-<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">metrics</span>(<span class="at">truth =</span> bench, <span class="at">estimate =</span> .pred) <span class="sc">%&gt;%</span></span>
-<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>    lm_pred <span class="sc">%&gt;%</span></span>
-<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rsq</span>(<span class="at">truth =</span> bench, <span class="at">estimate =</span> .pred) <span class="sc">%&gt;%</span></span>
-<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">metric =</span> <span class="st">"rsq"</span>)</span>
-<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a><span class="co"># tidy the model results</span></span>
-<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>lm_tidy <span class="ot">&lt;-</span> <span class="fu">tidy</span>(lm_fit)</span>
-<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a><span class="co"># visualize the model results</span></span>
-<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>lm_tidy <span class="sc">%&gt;%</span></span>
-<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> term, <span class="at">y =</span> estimate)) <span class="sc">+</span></span>
-<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> estimate <span class="sc">-</span> std.error, <span class="at">ymax =</span> estimate <span class="sc">+</span> std.error)) <span class="sc">+</span></span>
-<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Linear Regression Model Results"</span>,</span>
-<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Model: bench ~ ."</span>,</span>
-<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Term"</span>,</span>
-<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Estimate"</span></span>
-<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set seed for reproducability</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4133</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># load the combine dataset (should already be loaded from previous chunks)</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>combine_nums <span class="ot">&lt;-</span> condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(bench, arms, heightinchestotal, weight) <span class="sc">%&gt;%</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(bench <span class="sc">!=</span> <span class="dv">0</span>, arms <span class="sc">!=</span> <span class="dv">0</span>, heightinchestotal <span class="sc">!=</span> <span class="dv">0</span>, weight <span class="sc">!=</span> <span class="dv">0</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(combine_nums)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing split</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>combine_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(combine_nums, <span class="at">prop =</span> <span class="fl">0.8</span>)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing dataset</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>combine_training <span class="ot">&lt;-</span> <span class="fu">training</span>(combine_split)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>combine_testing <span class="ot">&lt;-</span> <span class="fu">testing</span>(combine_split)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="co"># create a recipe for preprocessing</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>combine_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(bench <span class="sc">~</span> ., <span class="at">data =</span> combine_training) <span class="sc">%&gt;%</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>())</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="co"># create a linear regression model</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>lm_spec <span class="ot">&lt;-</span> <span class="fu">linear_reg</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"lm"</span>)</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="co"># fit the model</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>lm_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(combine_recipe) <span class="sc">%&gt;%</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(lm_spec) <span class="sc">%&gt;%</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> combine_training)</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a><span class="co"># make predictions</span></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>lm_pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(lm_fit, combine_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(combine_testing)</span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate the model</span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>lm_eval <span class="ot">&lt;-</span> lm_pred <span class="sc">%&gt;%</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">metrics</span>(<span class="at">truth =</span> bench, <span class="at">estimate =</span> .pred) <span class="sc">%&gt;%</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>    lm_pred <span class="sc">%&gt;%</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rsq</span>(<span class="at">truth =</span> bench, <span class="at">estimate =</span> .pred) <span class="sc">%&gt;%</span></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">metric =</span> <span class="st">"rsq"</span>)</span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a><span class="co"># tidy the model results</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>lm_tidy <span class="ot">&lt;-</span> <span class="fu">tidy</span>(lm_fit)</span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a><span class="co"># visualize the model results</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>lm_tidy <span class="sc">%&gt;%</span></span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> term, <span class="at">y =</span> estimate)) <span class="sc">+</span></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> estimate <span class="sc">-</span> std.error, <span class="at">ymax =</span> estimate <span class="sc">+</span> std.error)) <span class="sc">+</span></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Linear Regression Model Results"</span>,</span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Model: bench ~ ."</span>,</span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Term"</span>,</span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Estimate"</span></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+<div id="fig-lin-reg" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-lin-reg-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;21: Linear regression predicting the number of repetitions of bench press a player can perform based on their height, weight, and arm length.</figcaption>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="predictors-of-player-position" class="level2">
 <h2 class="anchored" data-anchor-id="predictors-of-player-position">Predictors of Player Position</h2>
-<p>This figure displays a KNN model which characterizes what position a combine participant is most likely to be playing given a number of biometrics, including weight, wingspan, hand size, and multiple athletic statistics including ten, twenty, and forty yard dash times, three cone and twenty yard shuttle times, jump height, jump distance, and number of bench press repetitions. With the given data set, removing all rows with any values of zero would reduce the number of rows to an abysmally low number where no meaningful conclusions could be made. Since values of zero are included in this model, it is impossible to confirm or deny and evidence for/against a relationship between where a player plays on the field and the previously mentioned biometrics. This model will categorize players based on the previously mentioned biometrics by where they would play on the field, which includes the offensive line, defensive line, offensive backfield, defensive backfield, and special teams.</p>
+<p>These tables and figures display a KNN classification model which characterizes what position a combine participant is most likely to be playing given a number of biometrics, including weight, wingspan, hand size, and multiple athletic statistics including ten, twenty, and forty yard dash times, three cone and twenty yard shuttle times, jump height, jump distance, and number of bench press repetitions. With the given data set, removing all rows with any values of zero would reduce the number of rows to an abysmally low number where no meaningful conclusions could be made. Since values of zero are included in this model, it is impossible to confirm or deny and evidence for/against a relationship between where a player plays on the field and the previously mentioned biometrics. This model will categorize players based on the previously mentioned biometrics by where they would play on the field, which includes the offensive line, defensive line, offensive backfield, defensive backfield, and special teams.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>generalized_combine <span class="ot">&lt;-</span> condensed_combine <span class="sc">%&gt;%</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">position =</span> <span class="fu">fct_collapse</span>(position,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"O-Line"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"OG"</span>, <span class="st">"OT"</span>, <span class="st">"C"</span>),</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"O-2ry"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"FB"</span>, <span class="st">"QB"</span>, <span class="st">"RB"</span>, <span class="st">"TE"</span>, <span class="st">"WR"</span>),</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D-Line"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"DT"</span>, <span class="st">"DE"</span>),</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D-2ry"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"CB"</span>, <span class="st">"S"</span>, <span class="st">"LB"</span>),</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Special"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"K"</span>, <span class="st">"P"</span>, <span class="st">"LS"</span>),</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  ))</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#glimpse(generalized_combine)</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># set seed for reproducability</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4133</span>)</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co"># load the combine dataset (should already be loaded from previous chunks)</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>combine_pos <span class="ot">&lt;-</span> generalized_combine <span class="sc">%&gt;%</span></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(heightinchestotal, weight, arms, hands, fortyyd, twentyyd, tenyd, twentyss, threecone, vertical, broad, bench, position) <span class="co">#%&gt;%</span></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter(weight != 0, arms != 0, hands != 0, fortyyd != 0, twentyyd != 0, tenyd != 0, twentyss != 0, threecone != 0, vertical != 0, broad != 0, bench != 0)</span></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(combine_pos)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>generalized_combine <span class="ot">&lt;-</span> condensed_combine <span class="sc">%&gt;%</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">position =</span> <span class="fu">fct_collapse</span>(position,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"O-Line"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"OG"</span>, <span class="st">"OT"</span>, <span class="st">"C"</span>),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"O-2ry"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"FB"</span>, <span class="st">"QB"</span>, <span class="st">"RB"</span>, <span class="st">"TE"</span>, <span class="st">"WR"</span>),</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D-Line"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"DT"</span>, <span class="st">"DE"</span>),</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D-2ry"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"CB"</span>, <span class="st">"S"</span>, <span class="st">"LB"</span>),</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Special"</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"K"</span>, <span class="st">"P"</span>, <span class="st">"LS"</span>),</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co">#glimpse(generalized_combine)</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co"># set seed for reproducability</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4133</span>)</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="co"># load the combine dataset (should already be loaded from previous chunks)</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>combine_pos <span class="ot">&lt;-</span> generalized_combine <span class="sc">%&gt;%</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(heightinchestotal, weight, arms, hands, fortyyd, twentyyd, tenyd, twentyss, threecone, vertical, broad, bench, position) <span class="co">#%&gt;%</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter(weight != 0, arms != 0, hands != 0, fortyyd != 0, twentyyd != 0, tenyd != 0, twentyss != 0, threecone != 0, vertical != 0, broad != 0, bench != 0)</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="co"># glimpse(combine_pos)</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing split</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>combine_pos_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(combine_pos, <span class="at">prop =</span> <span class="fl">0.8</span>)</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing dataset</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>combine_pos_training <span class="ot">&lt;-</span> <span class="fu">training</span>(combine_pos_split)</span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>combine_pos_testing <span class="ot">&lt;-</span> <span class="fu">testing</span>(combine_pos_split)</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a><span class="co"># every predictor adds a dimension, and I have too many of them.</span></span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>position_rec <span class="ot">&lt;-</span> <span class="fu">recipe</span>(position <span class="sc">~</span> heightinchestotal <span class="sc">+</span> weight <span class="sc">+</span> arms <span class="sc">+</span> hands <span class="sc">+</span> fortyyd <span class="sc">+</span> twentyyd <span class="sc">+</span> tenyd <span class="sc">+</span> twentyss <span class="sc">+</span> threecone <span class="sc">+</span> vertical <span class="sc">+</span> broad <span class="sc">+</span> bench,</span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> combine_pos_training) <span class="sc">%&gt;%</span></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>())</span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>position_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">neighbors =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a><span class="co">#neighbors = tune()</span></span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a><span class="co">#follow lesson 8 example 3</span></span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>position_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(position_rec) <span class="sc">%&gt;%</span></span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(position_spec)</span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a>position_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(position_wf,combine_pos_training)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 4,945
-Columns: 13
-$ heightinchestotal &lt;dbl&gt; 69, 72, 72, 73, 68, 72, 72, 73, 78, 77, 75, 79, 70, …
-$ weight            &lt;dbl&gt; 205, 198, 221, 227, 180, 221, 218, 187, 294, 244, 24…
-$ arms              &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-$ hands             &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-$ fortyyd           &lt;dbl&gt; 4.60, 4.42, 4.57, 4.55, 4.43, 4.53, 4.56, 0.00, 5.03…
-$ twentyyd          &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-$ tenyd             &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-$ twentyss          &lt;dbl&gt; 3.95, 0.00, 4.10, 4.20, 4.07, 4.28, 4.03, 0.00, 4.19…
-$ threecone         &lt;dbl&gt; 6.79, 0.00, 7.10, 7.14, 6.64, 6.96, 7.09, 0.00, 7.20…
-$ vertical          &lt;dbl&gt; 42.5, 0.0, 39.0, 36.0, 34.0, 35.5, 35.5, 0.0, 30.0, …
-$ broad             &lt;dbl&gt; 130, 0, 121, 121, 121, 121, 122, 0, 111, 0, 122, 117…
-$ bench             &lt;dbl&gt; 24, 12, 19, 24, 13, 11, 0, 13, 0, 0, 23, 24, 0, 22, …
-$ position          &lt;fct&gt; O-2ry, O-2ry, O-2ry, D-2ry, O-2ry, O-2ry, D-2ry, O-2…</code></pre>
 </div>
+<p><a href="#fig-knn-truth">Figure 22</a> shows the results of the KNN classification with the test data which was previously left out of the training set.</p>
+<div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing split</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>combine_pos_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(combine_pos, <span class="at">prop =</span> <span class="fl">0.8</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># create a training and testing dataset</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>combine_pos_training <span class="ot">&lt;-</span> <span class="fu">training</span>(combine_pos_split)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>combine_pos_testing <span class="ot">&lt;-</span> <span class="fu">testing</span>(combine_pos_split)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># every predictor adds a dimension, and I have too many of them.</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>position_rec <span class="ot">&lt;-</span> <span class="fu">recipe</span>(position <span class="sc">~</span> heightinchestotal <span class="sc">+</span> weight <span class="sc">+</span> arms <span class="sc">+</span> hands <span class="sc">+</span> fortyyd <span class="sc">+</span> twentyyd <span class="sc">+</span> tenyd <span class="sc">+</span> twentyss <span class="sc">+</span> threecone <span class="sc">+</span> vertical <span class="sc">+</span> broad <span class="sc">+</span> bench,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> combine_pos_training) <span class="sc">%&gt;%</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>())</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>position_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">neighbors =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co">#neighbors = tune()</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co">#follow lesson 8 example 3</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>position_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(position_rec) <span class="sc">%&gt;%</span></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(position_spec)</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>position_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(position_wf,combine_pos_training)</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>position_fit <span class="sc">%&gt;%</span></span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(position,.pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>          Truth
-Prediction O-Line D-2ry D-Line O-2ry Special  OC
-   O-Line     106     0     35     0       0  12
-   D-2ry        0   192     11   103       0   0
-   D-Line      27     9     92    22       0  13
-   O-2ry        0    89     20   236       1   0
-   Special      0     0      1     0       2   0
-   OC           9     0      3     0       0   6</code></pre>
-</div>
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>position_fit <span class="sc">%&gt;%</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">accuracy</span>(position,.pred_class) <span class="sc">%&gt;%</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>position_fit <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">conf_mat</span>(position,.pred_class) <span class="sc">%&gt;%</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(<span class="at">type =</span> <span class="st">"heatmap"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<table class="table table-sm table-striped small">
+<div id="fig-knn-truth" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-knn-truth-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;22: Truth table of the K-Nearest-Neighbors classification where the values on the diagonals are successful identifications, and any others are unsuccessful identifications.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#tbl-knn-accuracy">Table 3</a> shows the accuracy of the model as a percentage, calculated by dividing the number of successful identifications by the total number of trials.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>position_fit <span class="sc">%&gt;%</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">accuracy</span>(position,.pred_class) <span class="sc">%&gt;%</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="tbl-knn-accuracy" class="anchored">
+<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<caption>Table&nbsp;3: Accuracy of the K-Nearest-Neighbors model, displayed in the <code>.estimate</code> column.</caption>
 <thead>
 <tr class="header">
-<th style="text-align: left;">.metric</th>
-<th style="text-align: left;">.estimator</th>
-<th style="text-align: right;">.estimate</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">.metric</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">.estimator</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">.estimate</th>
 </tr>
 </thead>
 <tbody>
@@ -670,20 +896,31 @@ Prediction O-Line D-2ry D-Line O-2ry Special  OC
 </tbody>
 </table>
 </div>
+
+
+</div>
+</div>
+<p><a href="#fig-knn">Figure 23</a> graphs which players the model successfully and unsuccessfully identified the positions of.</p>
+<div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>position_fit <span class="sc">%&gt;%</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prediction =</span> <span class="fu">ifelse</span>(position <span class="sc">==</span> .pred_class, <span class="st">"Correct"</span>, <span class="st">"Incorrect"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> fortyyd, <span class="at">y =</span> weight, <span class="at">color =</span> prediction)) <span class="sc">+</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_colorblind</span>() <span class="sc">+</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Weight (lb)"</span>, <span class="at">y =</span> <span class="st">"Forty Yard Dash (yd)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>position_fit <span class="sc">%&gt;%</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(combine_pos_testing) <span class="sc">%&gt;%</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prediction =</span> <span class="fu">ifelse</span>(position <span class="sc">==</span> .pred_class, <span class="st">"Correct"</span>, <span class="st">"Incorrect"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> fortyyd, <span class="at">y =</span> weight, <span class="at">color =</span> prediction)) <span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_colorblind</span>() <span class="sc">+</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Weight (lb)"</span>, <span class="at">y =</span> <span class="st">"Forty Yard Dash (yd)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="combine_bench_over_time_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+<div id="fig-knn" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="combine_bench_over_time_files/figure-html/fig-knn-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure&nbsp;23: K-Nearest-Neighbors regression categorizing players by position based upon their numerical combine statistics.</figcaption>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -693,11 +930,38 @@ Prediction O-Line D-2ry D-Line O-2ry Special  OC
 </section>
 <section id="knn-model-results" class="level2">
 <h2 class="anchored" data-anchor-id="knn-model-results">KNN Model Results</h2>
-<p>Since the KNN model includes observations which have zeros for one or more values, it is impossible to conclude whether there is a relationship between a player’s combine metrics and what group of positions a player is most likely to belong to. However, with the given data and KNN model, one would come to the “conclusion” that there is no relationship between a player’s combine statistics and area they would play on the field. If I were to improve this model, I would gather data which was complete, and greater in quantity. I know complete versions of this data exists because the NFL hosts their combine results <a href="https://www.nfl.com/combine/tracker/live-results/">here</a>. Additionally, I would change the categories to ones which are used in the NFL, and ones which have more rigorous definitions.</p>
+<p>Since the KNN classification model includes observations which have zeros for one or more values, it is impossible to conclude whether there is a relationship between a player’s combine metrics and what group of positions a player is most likely to belong to. However, with the given data and KNN model, one would come to the “conclusion” that there is no relationship between a player’s combine statistics and area they would play on the field. If I were to improve this model, I would gather data which was complete, and greater in quantity. I know complete versions of this data exists because the NFL hosts their combine results <a href="https://www.nfl.com/combine/tracker/live-results/">here</a>. Additionally, I would change the categories to ones which are used in the NFL, and ones which have more rigorous definitions.</p>
 </section>
 </section>
 <section id="conclusions" class="level1">
 <h1>Conclusions</h1>
+<p>In this report, I analyzed the relationships between number of bench press repetitions, player weight, player height, and player arm length for those who participated in the NFL Scouting Combine from the years 1999 to 2015. Despite the limited arm length data, there is evidence to suggest that there is a relationship between reps and all three predictors because of the low standard deviation. This is likely because these three predictors have the most impact upon the movement of the barbell, the rod holding the weights, and the player’s ability to repeatedly move the barbell. A player’s weight could factor into how much muscle mass they have, contributing to the increased strength of the player. Player’s height could influence whether more mass is stored in muscle tissue, in the case with shorter players, or in skeletal tissue, in the case with taller players. Finally and most obviously, a player’s arm length directly impacts their ability to move the barbell, because those with shorter arms need to make the bar travel a shorter distance than those with longer arms. The decreased travel time reduces the amount of time the pectoral muscles, highlighted in <a href="#fig-bench-diagram">Figure 24</a> are under tension, which reduces the amount of fatigue they experience. In the future, it would be helpful to include more complete data for players’ arm length, as well as more recent Combine data, ideally including the Combine most recent to the time of writing.</p>
+<div id="fig-bench-diagram" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="bench-press-stages-1.jpg" class="img-fluid figure-img" style="width:70.0%"></p>
+<figcaption class="figure-caption">Figure&nbsp;24: Diagram highlighting muscles worked when performing a bench press. The left diagram depicts a person in the middle, or at the bottom, of the press. The right diagram depicts a person at the start/end, or at the top, of the press. Image from (“How and why you should bench press” <a href="https://healthybodyathome.com/how-and-why-you-should-bench-press/">https://healthybodyathome.com/how-and-why-you-should-bench-press/</a>)</figcaption>
+</figure>
+</div>
+<p>As for the secondary model explored in this project, there is little evidence to suggest that the collection of a player’s numerical Combine statistics can accurately predict which position they play on the field. This is likely because the statistics of players playing the same position can vary widely, combined with the fact that players playing similar positions will likely share similar Combine statistics, would make it difficult for a KNN model to accurately predict a player’s position. The model presented in this chart could categorize players correctly only 65% of the time. This low accuracy could be a result of my model using too many predictors for a KNN classification In the future, I could use less predictor variables in the model, allowing for the true relationships, if any, to show themselves. Furthermore, it is likely that there exists a better model for categorizing players by position given the high number of predictors available for the model to use.</p>
+<p>It is likely that I could improve my analysis, especially regarding the models used and the completeness of the data set. For example, having current Combine statistics will give us a greater understanding of the relationships between the predictors and response, because there has been an adequate amount of time after the roster size increase in 2011. Another way I could improve this analysis is by using a model which is better equipped to handle the high number of dimensions that KNN isn’t capable of, or I could be more thoughtful about which variables I choose to include in the KNN model. Either ammendment to my analysis is likely to produce a result with a higher accuracy than the current model.</p>
+</section>
+<section id="acknolwedgements" class="level1">
+<h1>Acknolwedgements</h1>
+<p>All data used in this project is from publicly available sources. The data for the NFL Scouting Combine records form 1999 to 2015 was obtained from <a href="https://nflsavant.com/about.php">NFL Savant</a>. All code and data used in the analysis for this project is avaiable on a <a href="https://github.com/BernardScottIII/combine_bench_over_time">GitHub repository</a>.</p>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+<p><a href="https://nflsavant.com">NFLSavant.com</a></p>
+<p><a href="https://nflsavant.com/about.php">1999 to 2015 Combine Data</a></p>
+<p><a href="https://en.wikipedia.org/wiki/National_Football_League">The National Football League</a></p>
+<p><a href="https://en.wikipedia.org/wiki/National_Football_League_Draft">NFL Draft</a></p>
+<p><a href="https://en.wikipedia.org/wiki/NFL_Scouting_Combine">NFL Scouting Combine</a></p>
+<p><a href="NFL_Combine_40_yard_dash_recent.jpg">Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from (“Washington’s John Ross sets 40-yard dash record at NFL Scouting Combine” [https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888](https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888))</a></p>
+<p><a href="NFL_Combine_Bench_Front.avif">Official Bench Press bench used in the NFL Scouting Combine, image from (“NFL Combine: Which player did the most bench-press reps on Friday?” [https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html](https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html))</a></p>
+<p><a href="https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game.">https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams’%20roster%20sizes,inactive%20players%20before%20each%20game</a></p>
+<p><a href="lin_reg_ex.png">An example of a linear regression, image from (“Simple linear regression” [https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html](https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html))</a></p>
+<p><a href="knn_ex.jpg" id="fig-knn-ex">An example of a KNN-regression, image from (“K-Nearest Neighbors: A Simple Machine Learning Algorithm” [https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/](https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/))</a></p>
+<p><a href="bench-press-stages-1.jpg" id="fig-bench-diagram">Diagram highlighting muscles worked when performing a bench press. The left diagram depicts a person in the middle, or at the bottom, of the press. The right diagram depicts a person at the start/end, or at the top, of the press. Image from (“How and why you should bench press” [https://healthybodyathome.com/how-and-why-you-should-bench-press/](https://healthybodyathome.com/how-and-why-you-should-bench-press/))</a></p>
 </section>
 
 </main>
