@@ -330,7 +330,7 @@ The body part directly involved with performing the exercise is the arm, which t
 
 ```{r}
 #| label: fig-bench-vs-arm-length-over-time
-#| fig-cap: "Plot showing relationship between number of bench press repetitions and height, one plot for each year included in the data set. Height is in units of inches (in)."
+#| fig-cap: "Plot showing relationship between number of bench press repetitions and height, one plot for each year included in the data set. Arm Length is in units of inches (in)."
 
 bench_arms <- function(yr) {
   condensed_combine %>%

@@ -1,0 +1,370 @@
+---
+title: "Combine Bench Over Time"
+author: "Bernard Scott"
+format: revealjs
+editor: visual
+message: false
+---
+
+```{r}
+#| echo: false
+#| include: false
+
+library(tidyverse)
+library(ggthemes)
+library(modeldata)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(parsnip)
+library(recipes)
+library(tidymodels)
+library(ggpubr)
+
+theme_set(theme_minimal(base_size = 13))
+
+combine <- read_csv("data/clean_combine.csv")
+
+glimpse(combine)
+
+condensed_combine <- combine %>%
+  mutate(position = fct_collapse(position,
+    "S" = c("FS", "SS"),
+    "LB" = c("OLB", "ILB"),
+    "DT" = c("DT", "NT")
+  ))
+
+glimpse(condensed_combine)
+```
+
+## Initial Research Question
+
+- Each of the thirty-two National Football League (NFL) Franchises (teams) rosters a total of 53 players, with up to 16 on a "practice squad", and the remaining on the official team roster
+- After every season, each team has the opportunity to draft players from a candidate pool
+- Each player wanting to be drafted participates in the NFL Scouting Combine
+- **I would like to know which biometrics of Combine participants are the best predictors of the number of bench press repetitions one can perform?**
+
+## NFL Scouting Combine
+
+![Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" [https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888](https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888))](NFL_Combine_40_yard_dash_recent.jpg){#fig-forty_yard_dash width=70%}
+
+## 225-lb Bench Press
+
+![Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" [https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html](https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html))](NFL_Combine_Bench_Front.avif){#fig-combine_bench_press width=70%}
+
+## Combine Data
+
+```{r}
+#| message: false
+#| label: tbl-condensed-combine
+#| tbl-cap: "Select columns of the first five rows of the cleaned and condensed `combine` data set."
+
+condensed_combine %>%
+  select(name, position, heightinchestotal, weight, arms) %>%
+  head(3) %>%
+  kable()
+```
+
+## Player Bench Press Repetition Data
+
+```{r}
+#| label: fig-bench-over-time
+#| fig-cap: "Exploratory plot showing the average number of bench press repetitions from 1999 to 2015."
+
+condensed_combine %>%
+  group_by(year) %>%
+  summarise(mean_bench = mean(bench, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = mean_bench)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1999:2015) +
+  geom_smooth(method=lm, se=FALSE) +
+  theme(axis.text.x = element_text(angle=45)) + 
+  labs(x = "Year", y = "Average Bench Press Reps", title = "Average Bench Press Reps by Year")
+```
+
+## Player Weight Data
+
+```{r}
+#| label: fig-weight-hist
+#| fig-cap: "Histogram of combine participant weight values."
+
+condensed_combine %>%
+  ggplot(aes(x = weight)) +
+  geom_histogram(bins=60) +
+  labs(x = "Weight (lbs)", y = "Number of Players")
+```
+
+## Player Height Data
+
+```{r}
+#| label: fig-height-hist
+#| fig-cap: "Histogram of combine participant heights."
+
+condensed_combine %>%
+  ggplot(aes(x = heightinchestotal)) +
+  geom_histogram(bins=40)+
+  labs(x = "Height (in)", y = "Number of Players")
+```
+
+## Player Arm Length Data
+
+```{r}
+#| label: fig-arm-length-hist
+#| fig-cap: "Histogram of combine participant arm lengths."
+
+condensed_combine %>%
+  filter(arms != 0) %>%
+  ggplot(aes(x = arms)) +
+  geom_histogram(bins = 60) +
+  labs(x = "Arm Length (in)", y = "Number of Players")
+```
+
+## Player Weight and Number of Repetitions
+
+```{r}
+#| label: fig-bench-vs-weight-over-time
+#| fig-cap: "Plot showing relationship between number of bench press repetitions and weight, one plot for each year included in the data set. Weight is in units of pounds (lbs)."
+
+bench_weight <- function(yr) {
+  condensed_combine %>%
+    filter(bench > 0 & year == yr) %>%
+    ggplot(aes(x = bench, y = weight)) +
+    geom_point() +
+    geom_smooth(method=lm, se=FALSE) +
+    theme(axis.text.y=element_blank()) +
+    labs(x = "Bench Reps", y = "Weight")
+}
+
+bench_weight_per_year <- map(1999:2015, bench_weight)
+
+ggarrange(plotlist = bench_weight_per_year, ncol = 4, nrow = 5)
+```
+
+## Player Height and Number of Repetitions
+
+```{r}
+#| label: fig-bench-vs-height-over-time
+#| fig-cap: "Plot showing relationship between number of bench press repetitions and height, one plot for each year included in the data set. Height is in units of inches (in)."
+
+bench_height <- function(yr) {
+  condensed_combine %>%
+    filter(bench > 0 & year == yr & heightinchestotal > 0) %>%
+    ggplot(aes(x = bench, y = heightinchestotal)) +
+    geom_point() +
+    geom_smooth(method=lm, se=FALSE) +
+    theme(axis.text.y=element_blank()) +
+    labs(x = "Bench Reps", y = "Height")
+}
+
+bench_height_per_year <- map(1999:2015, bench_height)
+
+ggarrange(plotlist = bench_height_per_year, ncol = 4, nrow = 5)
+```
+
+## Player Arm Length and Number of Repetitions
+
+```{r}
+#| label: fig-bench-vs-arm-length-over-time
+#| fig-cap: "Plot showing relationship between number of bench press repetitions and height, one plot for each year included in the data set. Arm Length is in units of inches (in)."
+
+bench_arms <- function(yr) {
+  condensed_combine %>%
+    filter(bench > 0 & year == yr & position != "K" & arms != 0) %>%
+    ggplot(aes(x = bench, y = arms)) +
+    geom_point() +
+    geom_smooth(method=lm, se=FALSE) +
+    theme(axis.text.y=element_blank()) +
+    labs(x = "Bench Reps", y = "Arm Length")
+}
+
+bench_height_per_year <- map(1999:2015, bench_arms)
+
+ggarrange(plotlist = bench_height_per_year, ncol = 4, nrow = 5)
+```
+
+## Model Estimates for Number of Repetitions
+
+```{r}
+#| label: fig-lin-reg
+#| fig-cap: "Linear regression predicting the number of repetitions of bench press a player can perform based on their height, weight, and arm length."
+
+# set seed for reproducability
+set.seed(4133)
+
+# load the combine dataset (should already be loaded from previous chunks)
+combine_nums <- condensed_combine %>%
+  select(bench, arms, heightinchestotal, weight) %>%
+  filter(bench != 0, arms != 0, heightinchestotal != 0, weight != 0)
+
+#data(combine_nums)
+
+# create a training and testing split
+combine_split <- initial_split(combine_nums, prop = 0.8)
+
+# create a training and testing dataset
+combine_training <- training(combine_split)
+combine_testing <- testing(combine_split)
+
+# create a recipe for preprocessing
+combine_recipe <- recipe(bench ~ ., data = combine_training) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+# create a linear regression model
+lm_spec <- linear_reg() %>%
+  set_engine("lm")
+
+# fit the model
+lm_fit <- workflow() %>%
+  add_recipe(combine_recipe) %>%
+  add_model(lm_spec) %>%
+  fit(data = combine_training)
+
+# make predictions
+lm_pred <- predict(lm_fit, combine_testing) %>%
+  bind_cols(combine_testing)
+
+lm_pred %>%
+  ggplot(aes(x = bench, y = .pred)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Bench Press Repetitions", y = "Predicted Number of Repetitions")
+```
+
+## Bench Press Repetition Predictions
+
+```{r}
+#| label: fig-bench-press-lin-reg
+#| fig-cap: The results of a linear regression predicting the number of repetitions of bench press a player can perform based on the player's height, weight, and arm length.
+
+# evaluate the model
+lm_eval <- lm_pred %>%
+  metrics(truth = bench, estimate = .pred) %>%
+  bind_rows(
+    lm_pred %>%
+      rsq(truth = bench, estimate = .pred) %>%
+      mutate(metric = "rsq")
+  )
+
+# tidy the model results
+lm_tidy <- tidy(lm_fit)
+
+# visualize the model results
+lm_tidy %>%
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error)) +
+  coord_flip() +
+  labs(
+    title = "Linear Regression Model Results",
+    subtitle = "Model: bench ~ .",
+    x = "Predictor",
+    y = "Estimate"
+  )
+```
+
+## Model Estimates for Player Position
+
+```{r}
+#| label: fig-knn-classification-results
+#| fig-cap: A K-Nearest-Neighbors classification categorizing players by which group of positions they play on the field, as an offensive/defensive lineman or secondary player.
+
+generalized_combine <- condensed_combine %>%
+  mutate(position = fct_collapse(position,
+    "O-Line" = c("OG", "OT", "C"),
+    "O-2ry" = c("FB", "QB", "RB", "TE", "WR"),
+    "D-Line" = c("DT", "DE"),
+    "D-2ry" = c("CB", "S", "LB"),
+    "Special" = c("K", "P", "LS"),
+  ))
+
+#glimpse(generalized_combine)
+
+# set seed for reproducability
+set.seed(4133)
+
+# load the combine dataset (should already be loaded from previous chunks)
+combine_pos <- generalized_combine %>%
+  select(heightinchestotal, weight, arms, hands, fortyyd, twentyyd, tenyd, twentyss, threecone, vertical, broad, bench, position) #%>%
+  #filter(weight != 0, arms != 0, hands != 0, fortyyd != 0, twentyyd != 0, tenyd != 0, twentyss != 0, threecone != 0, vertical != 0, broad != 0, bench != 0)
+
+# glimpse(combine_pos)
+
+# create a training and testing split
+combine_pos_split <- initial_split(combine_pos, prop = 0.8)
+
+# create a training and testing dataset
+combine_pos_training <- training(combine_pos_split)
+combine_pos_testing <- testing(combine_pos_split)
+
+# every predictor adds a dimension, and I have too many of them.
+
+position_rec <- recipe(position ~ heightinchestotal + weight + arms + hands + fortyyd + twentyyd + tenyd + twentyss + threecone + vertical + broad + bench,
+                       data = combine_pos_training) %>%
+  step_normalize(all_numeric_predictors())
+
+position_spec <- nearest_neighbor(neighbors = 5) %>%
+  set_engine("kknn") %>%
+  set_mode("classification")
+
+#neighbors = tune()
+
+#follow lesson 8 example 3
+
+position_wf <- workflow() %>%
+  add_recipe(position_rec) %>%
+  add_model(position_spec)
+
+position_fit <- fit(position_wf,combine_pos_training)
+
+#| label: fig-knn
+#| fig-cap: "K-Nearest-Neighbors regression categorizing players by position based upon their numerical combine statistics."
+
+position_fit %>%
+  predict(combine_pos_testing) %>%
+  cbind(combine_pos_testing) %>%
+  mutate(prediction = ifelse(position == .pred_class, "Correct", "Incorrect")) %>%
+  ggplot(aes(x = fortyyd, y = weight, color = prediction)) +
+  geom_point() +
+  theme(legend.position = "bottom") +
+  scale_color_colorblind() +
+  labs(x = "Weight (lb)", y = "Forty Yard Dash (yd)")
+```
+
+## Player Position Model Accuracy
+
+```{r}
+#| label: tbl-knn-accuracy
+#| tbl-cap: "Accuracy of the K-Nearest-Neighbors model, displayed in the `.estimate` column."
+position_fit %>%
+  predict(combine_pos_testing) %>%
+  cbind(combine_pos_testing) %>%
+  accuracy(position,.pred_class) %>%
+  kable()
+```
+
+## Player Position Model Performance
+
+```{r}
+#| label: fig-knn-truth
+#| fig-cap: "Truth table of the K-Nearest-Neighbors classification where the values on the diagonals are successful identifications, and any others are unsuccessful identifications."
+position_fit %>%
+  predict(combine_pos_testing) %>%
+  cbind(combine_pos_testing) %>%
+  conf_mat(position,.pred_class) %>%
+  autoplot(type = "heatmap")
+```
+
+## Conclusions
+
+- Evidence supporting the hypothesis that player weight, height, and arm length has an impact on NFL Scouting Combine bench press performance
+- Individual player position is not likely to have an impact on their bench press performance
+- Lack of evidence that player position can be determined solely by observing Combine statistics
+
+## References
+
+- [NFLSavant.com](https://nflsavant.com)
+- [The National Football League](https://en.wikipedia.org/wiki/National_Football_League)
+- [NFL Scouting Combine](https://en.wikipedia.org/wiki/NFL_Scouting_Combine)
+- [Evolution of the Player](https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game.)
+- [Diagram highlighting muscles worked when performing a bench press](https://healthybodyathome.com/how-and-why-you-should-bench-press/)
