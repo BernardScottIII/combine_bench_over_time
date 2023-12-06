@@ -1,7 +1,9 @@
 ---
 title: "Combine Bench Over Time"
 author: "Bernard Scott"
-format: revealjs
+format: 
+  revealjs:
+    embed-resources: true
 editor: visual
 message: false
 output-file: "index"
@@ -47,11 +49,11 @@ glimpse(condensed_combine)
 
 ## NFL Scouting Combine
 
-![Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" <https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888>)](NFL_Combine_40_yard_dash_recent.jpg){#fig-forty_yard_dash width="70%"}
+![Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" <https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888>)](../images/NFL_Combine_40_yard_dash_recent.jpg){#fig-forty_yard_dash width="70%"}
 
 ## 225-lb Bench Press
 
-![Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" <https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html>)](NFL_Combine_Bench_Front.avif){#fig-combine_bench_press width="70%"}
+![Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" <https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html>)](../images/NFL_Combine_Bench_Front.avif){#fig-combine_bench_press width="70%"}
 
 ## Combine Data
 

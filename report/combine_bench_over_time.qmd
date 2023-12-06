@@ -2,7 +2,9 @@
 title: "Combine Bench Over Time"
 author: "BMS"
 institute: University of Scranton
-format: html
+format: 
+  html:
+    embed-resources: true
 editor: visual
 code-fold: true
 warning: false
@@ -48,7 +50,7 @@ In this project I explore how the strength of NFL Combine participants has chang
 
 [The National Football League](https://en.wikipedia.org/wiki/National_Football_League) (NFL) is a professional athletics organization consisting of 32 teams equally separated into two conferences, with each conference consisting of 4-team divisions. Every year in March, the NFL hosts a recruiting event called the [NFL Draft](https://en.wikipedia.org/wiki/National_Football_League_Draft). In the NFL Draft, every NFL Team has the opportunity to have an exclusive right to negotiate with prospective players and sign them to their team. To assess the talent and ability of each player, players will showcase their skills in front of NFL coaches, general managers, and scouting officials at the [NFL Scouting Combine](https://en.wikipedia.org/wiki/NFL_Scouting_Combine). In the Combine, players participate in a range of events displaying their skills, including a 40-yard dash (Shown in [Figure 1](#fig-forty_yard_dash)), vertical jump test, broad jump test, and the bench press test, which will be the focus of this project.
 
-![Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" <https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888>)](NFL_Combine_40_yard_dash_recent.jpg){#fig-forty_yard_dash width="70%"}
+![Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" <https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888>)](../images/NFL_Combine_40_yard_dash_recent.jpg){#fig-forty_yard_dash width="70%"}
 
 ## Initial Research Question
 
@@ -58,7 +60,7 @@ Before my exploratory data analysis, my first research question was to investiga
 
 In order to address my initial research question, I will study the relationships between the number of bench press repetitions and various relevant biometrics collected during the Combine. In the NFL Scouting Combine, each player is assessed for the number of repetitions of a 225-lb bench press one can perform lying down on a bench similar to those found in commercial gyms, and depicted in [Figure 2](#fig-combine_bench_press). The main part of this project will be assessing how the number of bench press repetitions has increased from 1999 to 2015, since those are the years the data set includes data for.
 
-![Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" <https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html>)](NFL_Combine_Bench_Front.avif){#fig-combine_bench_press width="70%"}
+![Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" <https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html>)](../images/NFL_Combine_Bench_Front.avif){#fig-combine_bench_press width="70%"}
 
 # Data Collection and Documentation
 
@@ -410,13 +412,13 @@ From the questions asked above, I now have a better understanding of the combine
 
 For the variables I have explored, I will use a linear regression, an example of which shown in [Figure 19](#fig-lin-reg-ex), to assess whether there is a relationship between the number of bench press repetitions a player can perform and several biometrics, including weight, height, and arm length.
 
-![An example of a linear regression, image from ("Simple linear regression" <https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html>)](lin_reg_ex.png){#fig-lin-reg-ex width="70%"}
+![An example of a linear regression, image from ("Simple linear regression" <https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html>)](../images/lin_reg_ex.png){#fig-lin-reg-ex width="70%"}
 
 ## KNN
 
 Another model, shown in [Figure 20](#fig-knn-ex) I will use is the K-Nearest-Neighbors classification model, in order to investigate the potential relationship between a player's position and their combine statistics, including bench, height, weight, and arm length.
 
-![An example of a KNN Classification, image from ("K-Nearest Neighbors: A Simple Machine Learning Algorithm" <https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/>)](knn_ex.jpg){#fig-knn-ex width="70%"}
+![An example of a KNN Classification, image from ("K-Nearest Neighbors: A Simple Machine Learning Algorithm" <https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/>)](../images/knn_ex.jpg){#fig-knn-ex width="70%"}
 
 # Model Results
 
@@ -597,7 +599,7 @@ Since the KNN classification model includes observations which have zeros for on
 
 In this report, I analyzed the relationships between number of bench press repetitions, player weight, player height, and player arm length for those who participated in the NFL Scouting Combine from the years 1999 to 2015. Despite the limited arm length data, there is evidence to suggest that there is a relationship between reps and all three predictors because of the low standard deviation. This is likely because these three predictors have the most impact upon the movement of the barbell, the rod holding the weights, and the player's ability to repeatedly move the barbell. A player's weight could factor into how much muscle mass they have, contributing to the increased strength of the player. Player's height could influence whether more mass is stored in muscle tissue, in the case with shorter players, or in skeletal tissue, in the case with taller players. Finally and most obviously, a player's arm length directly impacts their ability to move the barbell, because those with shorter arms need to make the bar travel a shorter distance than those with longer arms. The decreased travel time reduces the amount of time the pectoral muscles, highlighted in [Figure 24](#fig-bench-diagram) are under tension, which reduces the amount of fatigue they experience. In the future, it would be helpful to include more complete data for players' arm length, as well as more recent Combine data, ideally including the Combine most recent to the time of writing.
 
-![Diagram highlighting muscles worked when performing a bench press. The left diagram depicts a person in the middle, or at the bottom, of the press. The right diagram depicts a person at the start/end, or at the top, of the press. Image from ("How and why you should bench press" <https://healthybodyathome.com/how-and-why-you-should-bench-press/>)](bench-press-stages-1.jpg){#fig-bench-diagram width="70%"}
+![Diagram highlighting muscles worked when performing a bench press. The left diagram depicts a person in the middle, or at the bottom, of the press. The right diagram depicts a person at the start/end, or at the top, of the press. Image from ("How and why you should bench press" <https://healthybodyathome.com/how-and-why-you-should-bench-press/>)](../images/bench-press-stages-1.jpg){#fig-bench-diagram width="70%"}
 
 As for the secondary model explored in this project, there is little evidence to suggest that the collection of a player's numerical Combine statistics can accurately predict which position they play on the field. This is likely because the statistics of players playing the same position can vary widely, combined with the fact that players playing similar positions will likely share similar Combine statistics, would make it difficult for a KNN model to accurately predict a player's position. The model presented in this chart could categorize players correctly only 65% of the time. This low accuracy could be a result of my model using too many predictors for a KNN classification In the future, I could use less predictor variables in the model, allowing for the true relationships, if any, to show themselves. Furthermore, it is likely that there exists a better model for categorizing players by position given the high number of predictors available for the model to use.
 
@@ -619,14 +621,14 @@ All data used in this project is from publicly available sources. The data for t
 
 [NFL Scouting Combine](https://en.wikipedia.org/wiki/NFL_Scouting_Combine)
 
-[Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" \[https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888\](https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888))](NFL_Combine_40_yard_dash_recent.jpg)
+[Player Sprinting the Forty Yard Dash at the NFL Scouting Combine, image from ("Washington's John Ross sets 40-yard dash record at NFL Scouting Combine" \[https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888\](https://www.wkyc.com/article/sports/nfl/nfl-draft/washingtons-john-ross-sets-40-yard-dash-record-at-nfl-scouting-combine/95-419799888))](../images/NFL_Combine_40_yard_dash_recent.jpg)
 
-[Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" \[https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html\](https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html))](NFL_Combine_Bench_Front.avif)
+[Official Bench Press bench used in the NFL Scouting Combine, image from ("NFL Combine: Which player did the most bench-press reps on Friday?" \[https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html\](https://www.al.com/sports/2019/03/nfl-combine-which-player-did-the-most-bench-press-reps-on-friday.html))](../images/NFL_Combine_Bench_Front.avif)
 
 [https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:\~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game](https://operations.nfl.com/inside-football-ops/players-legends/evolution-of-the-nfl-player/#:~:text=Over%20time%2C%20teams'%20roster%20sizes,inactive%20players%20before%20each%20game.)
 
-[An example of a linear regression, image from ("Simple linear regression" \[https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html\](https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html))](lin_reg_ex.png)
+[An example of a linear regression, image from ("Simple linear regression" \[https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html\](https://web.stanford.edu/class/stats202/notes/Linear-regression/Simple-linear-regression.html))](../images/lin_reg_ex.png)
 
-[An example of a KNN-regression, image from ("K-Nearest Neighbors: A Simple Machine Learning Algorithm" \[https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/\](https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/))](knn_ex.jpg){#fig-knn-ex}
+[An example of a KNN-regression, image from ("K-Nearest Neighbors: A Simple Machine Learning Algorithm" \[https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/\](https://rapidminer.com/blog/k-nearest-neighbors-laziest-machine-learning-technique/))](../images/knn_ex.jpg){#fig-knn-ex}
 
-[Diagram highlighting muscles worked when performing a bench press. The left diagram depicts a person in the middle, or at the bottom, of the press. The right diagram depicts a person at the start/end, or at the top, of the press. Image from ("How and why you should bench press" \[https://healthybodyathome.com/how-and-why-you-should-bench-press/\](https://healthybodyathome.com/how-and-why-you-should-bench-press/))](bench-press-stages-1.jpg){#fig-bench-diagram}
+[Diagram highlighting muscles worked when performing a bench press. The left diagram depicts a person in the middle, or at the bottom, of the press. The right diagram depicts a person at the start/end, or at the top, of the press. Image from ("How and why you should bench press" \[https://healthybodyathome.com/how-and-why-you-should-bench-press/\](https://healthybodyathome.com/how-and-why-you-should-bench-press/))](../images/bench-press-stages-1.jpg){#fig-bench-diagram}
